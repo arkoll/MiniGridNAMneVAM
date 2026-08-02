@@ -1,0 +1,537 @@
+diff --git a/src/callbacks.py b/src/callbacks.py
+index 4c4da41..a46c718 100644
+--- a/src/callbacks.py
++++ b/src/callbacks.py
+@@ -27,6 +27,12 @@ from pytorch_fid.fid_score import calculate_frechet_distance
+ 
+ class CUDACallback(Callback):
+     # see https://github.com/SeanNaren/minGPT/blob/master/mingpt/callback.py
++
++    # При возобновлении с чекпоинта Lightning восстанавливается в СЕРЕДИНУ эпохи и
++    # доигрывает её остаток: on_train_epoch_end тогда случается без предшествующего
++    # on_train_epoch_start, и замерять время не по чему.
++    start_time = None
++
+     @staticmethod
+     def _gpu_index(trainer):
+         # Lightning 2.x API: root_gpu / training_type_plugin were removed in 2.0.
+@@ -39,6 +45,8 @@ class CUDACallback(Callback):
+         self.start_time = time.time()
+ 
+     def on_train_epoch_end(self, trainer, pl_module):
++        if self.start_time is None:
++            return
+         gpu_index = self._gpu_index(trainer)
+         torch.cuda.synchronize(gpu_index)
+         max_memory = torch.cuda.max_memory_allocated(gpu_index) / 2 ** 20
+@@ -504,13 +512,20 @@ class XLandJointPredictionLogger(Callback):
+ 
+             if step_dir is not None:
+                 stem = os.path.join(step_dir, sample_name)
+-                torchvision.io.write_video(
+-                    stem + ".mp4",
+-                    torch.from_numpy(strip),
+-                    fps=2,
+-                    video_codec="h264",
+-                    options={"crf": "10"},
+-                )
++                # torchvision 0.28 больше не отдаёт io.write_video, поэтому пишем гифку
++                # через imageio. Содержимое то же, меняется только контейнер.
++                try:
++                    torchvision.io.write_video(
++                        stem + ".mp4",
++                        torch.from_numpy(strip),
++                        fps=2,
++                        video_codec="h264",
++                        options={"crf": "10"},
++                    )
++                except (AttributeError, RuntimeError, OSError):
++                    import imageio.v3 as _iio
++
++                    _iio.imwrite(stem + ".gif", strip, extension=".gif", duration=500, loop=0)
+                 with open(stem + ".json", "w", encoding="utf-8") as handle:
+                     json.dump(
+                         {
+diff --git a/src/callbacks_shapecraft.py b/src/callbacks_shapecraft.py
+new file mode 100644
+index 0000000..49ecf42
+--- /dev/null
++++ b/src/callbacks_shapecraft.py
+@@ -0,0 +1,142 @@
++"""Метрики валидации под нашу гипотезу ShapeCraft: раздельно по val_id и val_ood.
++
++Зачем отдельный коллбэк. Валидационный набор у нас склеен из двух: `val_id` — знакомые
++привязки цвета к форме на новых раскладках, `val_ood` — привязки, которых в обучении не
++было. Штатные скаляры усредняются по всему набору и разницу между ними не показывают,
++а именно эта разница и есть предмет эксперимента.
++
++Пиксельные метрики намеренно не считаем: превращение объекта занимает одну клетку из 64,
++и любое усреднение по кадру его не видит. Считаем то, что относится к делу:
++предсказание действий по одному наблюдаемому кадру.
++
++Коллбэк устроен так, чтобы не ронять длинный прогон: если раскладка данных окажется не
++такой, как ожидается, он один раз пишет предупреждение и молча выключается.
++"""
++
++from __future__ import annotations
++
++import os
++
++import torch
++from pytorch_lightning.callbacks import Callback
++from pytorch_lightning.utilities import rank_zero_only
++
++
++class ShapeCraftSplitActionMetrics(Callback):
++    """Точность предсказания действий отдельно на val_id и val_ood."""
++
++    SETS = ("val_id", "val_ood")
++
++    def __init__(self, num_transitions: int = 3):
++        super().__init__()
++        self.num_transitions = int(num_transitions)
++        self._files = None
++        self._disabled = False
++        self._reset()
++
++    def _reset(self):
++        self._hits = {s: torch.zeros(self.num_transitions) for s in self.SETS}
++        self._seq_hits = {s: 0.0 for s in self.SETS}
++        self._counts = {s: 0 for s in self.SETS}
++
++    def _resolve_files(self, trainer):
++        """Список файлов валидационного источника: по нему определяем, из какого набора окно."""
++        loaders = trainer.val_dataloaders
++        if isinstance(loaders, (list, tuple)):
++            if not loaders:
++                return None
++            loaders = loaders[0]
++        dataset = getattr(loaders, "dataset", None)
++        source = getattr(dataset, "data_source", None)
++        files = getattr(source, "files", None)
++        if not files:
++            return None
++        return [os.path.basename(str(f)) for f in files]
++
++    @staticmethod
++    def _set_of(name: str):
++        # имена присвоены конвертером: episode_train_id_* и episode_train_ood_*
++        if "_ood_" in name:
++            return "val_ood"
++        if "_id_" in name:
++            return "val_id"
++        return None
++
++    def on_validation_epoch_start(self, trainer, pl_module):
++        self._reset()
++        if self._disabled:
++            return
++        self._files = self._resolve_files(trainer)
++        if self._files is None and not self._disabled:
++            self._disabled = True
++            print(
++                "[ShapeCraftSplitActionMetrics] не удалось получить список файлов валидации, "
++                "раздельные метрики выключены",
++                flush=True,
++            )
++
++    @torch.no_grad()
++    def on_validation_batch_end(
++        self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx=0
++    ):
++        if self._disabled or self._files is None or trainer.sanity_checking:
++            return
++        try:
++            logits = pl_module.predict_action_logits(batch["video"])
++        except Exception as error:  # длинный прогон важнее метрики
++            self._disabled = True
++            print(f"[ShapeCraftSplitActionMetrics] отключаюсь: {error}", flush=True)
++            return
++
++        n = min(self.num_transitions, logits.shape[1])
++        targets = batch["action"][:, :n]
++        if targets.ndim == 3:
++            targets = targets.argmax(dim=-1)
++        targets = targets.long().to(logits.device)
++        predicted = logits[:, :n].argmax(dim=-1)
++        correct = (predicted == targets).float().cpu()
++
++        traj = batch["meta_info"]["traj_idx"]
++        for i in range(correct.shape[0]):
++            index = int(traj[i])
++            if index >= len(self._files):
++                continue
++            which = self._set_of(self._files[index])
++            if which is None:
++                continue
++            self._hits[which][:n] += correct[i]
++            self._seq_hits[which] += float(correct[i].all())
++            self._counts[which] += 1
++
++    @rank_zero_only
++    def on_validation_epoch_end(self, trainer, pl_module):
++        if self._disabled or trainer.sanity_checking:
++            return
++        summary = {}
++        for s in self.SETS:
++            count = self._counts[s]
++            if count == 0:
++                continue
++            per_position = (self._hits[s] / count).tolist()
++            mean_accuracy = float(sum(per_position) / len(per_position))
++            summary[s] = mean_accuracy
++            pl_module.log(f"val_split/{s}/action_accuracy", mean_accuracy, sync_dist=False)
++            pl_module.log(
++                f"val_split/{s}/action_sequence_accuracy",
++                self._seq_hits[s] / count,
++                sync_dist=False,
++            )
++            pl_module.log(f"val_split/{s}/windows", float(count), sync_dist=False)
++            for position, value in enumerate(per_position):
++                pl_module.log(f"val_split/{s}/action_accuracy_t{position}", value, sync_dist=False)
++            print(
++                f"[ShapeCraft] {s}: окон {count}, точность по действиям {mean_accuracy:.4f}, "
++                f"вся тройка {self._seq_hits[s] / count:.4f}, по шагам "
++                + ", ".join(f"t{p}={v:.4f}" for p, v in enumerate(per_position)),
++                flush=True,
++            )
++        # главное число эксперимента: насколько просела точность на невиданных привязках
++        if "val_id" in summary and "val_ood" in summary:
++            gap = summary["val_id"] - summary["val_ood"]
++            pl_module.log("val_split/ood_gap_action_accuracy", gap, sync_dist=False)
++            print(f"[ShapeCraft] разрыв val_id минус val_ood: {gap:+.4f}", flush=True)
+diff --git a/src/configs/dataset/xland/final_v1.yaml b/src/configs/dataset/xland/final_v1.yaml
+new file mode 100644
+index 0000000..ea35526
+--- /dev/null
++++ b/src/configs/dataset/xland/final_v1.yaml
+@@ -0,0 +1,26 @@
++# @package dataset
++#
++# Вариант 1: только экспертные состояния и экспертные действия.
++# Валидация общая для всех четырёх вариантов: data/final/val_both.
++name: "xland"
++frame_interval: 1
++loader:
++  n_rollout: null
++  data_path: "${dataset_dir}/final/v1_expert"
++  data_path_train: "${dataset_dir}/final/v1_expert"
++  data_path_val: "${dataset_dir}/final/val_both"
++  split_ratio: 0.9
++  validation_size: null
++  normalize_state: false
++  normalize_action: false
++  normalize_pixel: true
++  train_slice_mode: "random"
++  val_slice_mode: "exhaustive"
++  stride: 1
++  resize_mode: "stretch"
++  random_seed: 42
++  validation_fixed_subset_path: null
++  validation_fixed_subset_size: 1024
++  validation_fixed_subset_seed: 4242
++spec:
++  action_dim: 6
+diff --git a/src/configs/dataset/xland/final_v2.yaml b/src/configs/dataset/xland/final_v2.yaml
+new file mode 100644
+index 0000000..ce2a21f
+--- /dev/null
++++ b/src/configs/dataset/xland/final_v2.yaml
+@@ -0,0 +1,26 @@
++# @package dataset
++#
++# Варианты 2 и 3: половина окон из экспертных эпизодов, половина из случайных. Вариант 3 читает то же самое, но с XLAND_ACTION_FIELD=executed.
++# Валидация общая для всех четырёх вариантов: data/final/val_both.
++name: "xland"
++frame_interval: 1
++loader:
++  n_rollout: null
++  data_path: "${dataset_dir}/final/v2_mixed"
++  data_path_train: "${dataset_dir}/final/v2_mixed"
++  data_path_val: "${dataset_dir}/final/val_both"
++  split_ratio: 0.9
++  validation_size: null
++  normalize_state: false
++  normalize_action: false
++  normalize_pixel: true
++  train_slice_mode: "random"
++  val_slice_mode: "exhaustive"
++  stride: 1
++  resize_mode: "stretch"
++  random_seed: 42
++  validation_fixed_subset_path: null
++  validation_fixed_subset_size: 1024
++  validation_fixed_subset_seed: 4242
++spec:
++  action_dim: 6
+diff --git a/src/configs/dataset/xland/final_v4a.yaml b/src/configs/dataset/xland/final_v4a.yaml
+new file mode 100644
+index 0000000..1bb79d8
+--- /dev/null
++++ b/src/configs/dataset/xland/final_v4a.yaml
+@@ -0,0 +1,26 @@
++# @package dataset
++#
++# Вариант 4, фаза A: только случайные эпизоды (обучается модель мира).
++# Валидация общая для всех четырёх вариантов: data/final/val_both.
++name: "xland"
++frame_interval: 1
++loader:
++  n_rollout: null
++  data_path: "${dataset_dir}/final/v4_random"
++  data_path_train: "${dataset_dir}/final/v4_random"
++  data_path_val: "${dataset_dir}/final/val_both"
++  split_ratio: 0.9
++  validation_size: null
++  normalize_state: false
++  normalize_action: false
++  normalize_pixel: true
++  train_slice_mode: "random"
++  val_slice_mode: "exhaustive"
++  stride: 1
++  resize_mode: "stretch"
++  random_seed: 42
++  validation_fixed_subset_path: null
++  validation_fixed_subset_size: 1024
++  validation_fixed_subset_seed: 4242
++spec:
++  action_dim: 6
+diff --git a/src/configs/dataset/xland/final_v4b.yaml b/src/configs/dataset/xland/final_v4b.yaml
+new file mode 100644
+index 0000000..ed4cd6c
+--- /dev/null
++++ b/src/configs/dataset/xland/final_v4b.yaml
+@@ -0,0 +1,26 @@
++# @package dataset
++#
++# Вариант 4, фаза B: только экспертные эпизоды, голова действий новая.
++# Валидация общая для всех четырёх вариантов: data/final/val_both.
++name: "xland"
++frame_interval: 1
++loader:
++  n_rollout: null
++  data_path: "${dataset_dir}/final/v4_expert"
++  data_path_train: "${dataset_dir}/final/v4_expert"
++  data_path_val: "${dataset_dir}/final/val_both"
++  split_ratio: 0.9
++  validation_size: null
++  normalize_state: false
++  normalize_action: false
++  normalize_pixel: true
++  train_slice_mode: "random"
++  val_slice_mode: "exhaustive"
++  stride: 1
++  resize_mode: "stretch"
++  random_seed: 42
++  validation_fixed_subset_path: null
++  validation_fixed_subset_size: 1024
++  validation_fixed_subset_seed: 4242
++spec:
++  action_dim: 6
+diff --git a/src/configs/dataset/xland/shapecraft_dagger.yaml b/src/configs/dataset/xland/shapecraft_dagger.yaml
+new file mode 100644
+index 0000000..3b617f4
+--- /dev/null
++++ b/src/configs/dataset/xland/shapecraft_dagger.yaml
+@@ -0,0 +1,35 @@
++# @package dataset
++#
++# Смешанный набор с ЭКСПЕРТНОЙ разметкой (DAgger-подобный).
++#
++# Половина эпизодов — жадный эксперт, половина — случайная политика по допустимым действиям.
++# Целевое действие в КАЖДОМ кадре обеих половин — действие эксперта, спрошенного в этом
++# состоянии. На случайных эпизодах выполненное действие и метка расходятся намеренно: так
++# модель учится, что делать из состояний, куда сама сойдёт с экспертного пути.
++#
++# Состав по кадрам, а не по эпизодам: экспертный эпизод ~28 кадров, случайный всегда 193,
++# поэтому около 87% окон приходит из случайных. Это осознанная ставка на покрытие состояний.
++#
++# Валидации собраны тем же составом, иначе их метрики не сравнивались бы с обучением.
++name: "xland"
++frame_interval: 1
++loader:
++  n_rollout: null
++  data_path: "${dataset_dir}/xland-dagger/train"
++  data_path_train: "${dataset_dir}/xland-dagger/train"
++  data_path_val: "${dataset_dir}/xland-dagger/val_both"
++  split_ratio: 0.9
++  validation_size: null
++  normalize_state: false
++  normalize_action: false
++  normalize_pixel: true
++  train_slice_mode: "random"
++  val_slice_mode: "exhaustive"
++  stride: 1
++  resize_mode: "stretch"
++  random_seed: 42
++  validation_fixed_subset_path: null
++  validation_fixed_subset_size: 1024
++  validation_fixed_subset_seed: 4242
++spec:
++  action_dim: 6
+diff --git a/src/configs/dataset/xland/shapecraft_expert.yaml b/src/configs/dataset/xland/shapecraft_expert.yaml
+new file mode 100644
+index 0000000..3be0a43
+--- /dev/null
++++ b/src/configs/dataset/xland/shapecraft_expert.yaml
+@@ -0,0 +1,29 @@
++# @package dataset
++#
++# Экспертный набор: ЖАДНАЯ политика, только успешные эпизоды, случайной компоненты нет.
++#
++# Прошлый набор собирался под обусловленную действием world-модель, где случайные действия —
++# ценность. Здесь действие предсказывается, и случайные действия были бы шумом в разметке:
++# по кадру их не предсказать в принципе.
++name: "xland"
++frame_interval: 1
++loader:
++  n_rollout: null
++  data_path: "${dataset_dir}/xland-expert/train"
++  data_path_train: "${dataset_dir}/xland-expert/train"
++  data_path_val: "${dataset_dir}/xland-expert/val_both"
++  split_ratio: 0.9
++  validation_size: null
++  normalize_state: false
++  normalize_action: false
++  normalize_pixel: true
++  train_slice_mode: "random"
++  val_slice_mode: "exhaustive"
++  stride: 1
++  resize_mode: "stretch"
++  random_seed: 42
++  validation_fixed_subset_path: null
++  validation_fixed_subset_size: 1024
++  validation_fixed_subset_seed: 4242
++spec:
++  action_dim: 6
+diff --git a/src/configs/dataset/xland/shapecraft_ours.yaml b/src/configs/dataset/xland/shapecraft_ours.yaml
+new file mode 100644
+index 0000000..e926dc6
+--- /dev/null
++++ b/src/configs/dataset/xland/shapecraft_ours.yaml
+@@ -0,0 +1,35 @@
++# @package dataset
++#
++# Наши наборы ShapeCraft, конвертированные в формат joint-модели (npz, 128 px).
++# Сбор ментора пропущен намеренно: он собирает ExactCraft, а гипотеза наша — ShapeCraft.
++#
++# Обучение идёт по нашему train, валидация — по СКЛЕЕННОМУ каталогу val_both, куда
++# символическими ссылками сведены val_id (знакомые привязки, новые раскладки) и
++# val_ood (невиданные привязки цвета к форме). Раздельные числа считает
++# ShapeCraftSplitActionMetrics: разница между ними и есть предмет эксперимента.
++name: "xland"
++frame_interval: 1
++loader:
++  n_rollout: null
++  data_path: "${dataset_dir}/xland-shape-joint128/train"
++  # раздельные каталоги: split_ratio при этом не используется вовсе
++  data_path_train: "${dataset_dir}/xland-shape-joint128/train"
++  data_path_val: "${dataset_dir}/xland-shape-joint128/val_both"
++  split_ratio: 0.9
++  validation_size: null
++  normalize_state: false
++  # действия one-hot, нормировать нечего; нормировка по статистике — ещё и канал утечки
++  normalize_action: false
++  normalize_pixel: true
++  train_slice_mode: "random"
++  val_slice_mode: "exhaustive"
++  stride: 1
++  resize_mode: "stretch"
++  random_seed: 42
++  # окна валидации фиксируются один раз и переиспользуются на всех замерах,
++  # иначе шаги обучения сравнивались бы на разных окнах
++  validation_fixed_subset_path: null
++  validation_fixed_subset_size: 1024
++  validation_fixed_subset_seed: 4242
++spec:
++  action_dim: 6
+diff --git a/src/configs/experiment/xland_joint_ours.yaml b/src/configs/experiment/xland_joint_ours.yaml
+new file mode 100644
+index 0000000..4e276a8
+--- /dev/null
++++ b/src/configs/experiment/xland_joint_ours.yaml
+@@ -0,0 +1,17 @@
++# @package experiment
++#
++# То же, что xland_joint у ментора, но с раздельными метриками по нашим двум валидациям
++# и без пиксельных метрик. Параметры МОДЕЛИ не трогаются вообще: они заморожены.
++defaults:
++  - xland_joint
++
++joint_action:
++  # считать точность действий отдельно на val_id и val_ood
++  split_action_metrics: true
++
++evaluation:
++  # пиксельные метрики и FVD выключены намеренно: превращение объекта — одна клетка
++  # из 64, усреднение по кадру его не видит
++  metrics:
++    evaluate: false
++  save_videos: false
+diff --git a/src/experiments/train_experiment.py b/src/experiments/train_experiment.py
+index 7d2653e..15b616c 100644
+--- a/src/experiments/train_experiment.py
++++ b/src/experiments/train_experiment.py
+@@ -884,6 +884,15 @@ class TrainExperiment(BaseExperiment):
+                 save_dir=os.path.join(experiment_dir, "joint_videos"),
+             ))
+ 
++        # Наша добавка: валидация склеена из val_id и val_ood, и штатные скаляры
++        # усредняются по обоим. Разделяем — именно разница между ними и есть эксперимент.
++        if bool(joint_cfg.get("split_action_metrics", False)):
++            from callbacks_shapecraft import ShapeCraftSplitActionMetrics
++
++            callbacks_list.append(ShapeCraftSplitActionMetrics(
++                num_transitions=int(joint_cfg.get("num_transitions", 3)),
++            ))
++
+         return {
+             "experiment_dir": experiment_dir,
+             "checkpoint_dir": checkpoint_dir,
+diff --git a/src/wm_datasets/data_source/xland.py b/src/wm_datasets/data_source/xland.py
+index 7dfd894..e34a476 100644
+--- a/src/wm_datasets/data_source/xland.py
++++ b/src/wm_datasets/data_source/xland.py
+@@ -2,6 +2,7 @@
+ 
+ from functools import lru_cache
+ import json
++import os
+ from pathlib import Path
+ from typing import Dict
+ 
+@@ -32,12 +33,19 @@ class XLandDataSource(DataSource):
+                 f"No episode_train_*.npz files found below {self.data_path}"
+             )
+ 
++    # Какое поле npz считать целевым действием. По умолчанию "actions" — прежнее поведение.
++    # "executed" — фактически выполненное действие (на случайной половине оно случайное);
++    # нужно, чтобы сравнить экспертную переразметку с честной записью происходившего,
++    # не переписывая десятки тысяч файлов ради одного массива.
++    ACTION_FIELD = os.environ.get("XLAND_ACTION_FIELD", "actions")
++
+     @lru_cache(maxsize=16)
+     def _load_episode(self, index: int) -> Dict:
+         path = self.files[index]
+         with np.load(path, allow_pickle=False) as episode:
+             rgb = np.asarray(episode["rgb"], dtype=np.uint8)
+-            actions = np.asarray(episode["actions"], dtype=np.int64)
++            field = self.ACTION_FIELD if self.ACTION_FIELD in episode else "actions"
++            actions = np.asarray(episode[field], dtype=np.int64)
+             metadata = {}
+             if "metadata" in episode:
+                 raw = episode["metadata"]
+@@ -78,7 +86,12 @@ class XLandDataSource(DataSource):
+         )
+ 
+     def get_seq_length(self, index: int) -> int:
+-        return int(self._load_episode(index)["rgb"].shape[0])
++        # Длину берём, НЕ распаковывая кадры: индексация зовёт этот метод для каждого
++        # эпизода, а через _load_episode он распаковал бы весь rgb — на наших 30 тысячах
++        # эпизодов это миллионы кадров впустую на каждом старте.
++        # np.load ленив по массивам, поэтому читается только крошечный actions.
++        with np.load(self.files[index], allow_pickle=False) as episode:
++            return int(episode["actions"].shape[0]) + 1
+ 
+     def load_visual_frames(
+         self,
