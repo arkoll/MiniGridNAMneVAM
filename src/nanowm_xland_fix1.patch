@@ -1,0 +1,13 @@
+diff --git a/src/configs/experiment/xland_joint.yaml b/src/configs/experiment/xland_joint.yaml
+index 483e29c..40c24f4 100644
+--- a/src/configs/experiment/xland_joint.yaml
++++ b/src/configs/experiment/xland_joint.yaml
+@@ -62,7 +62,7 @@ diffusion:
+ 
+ infra:
+   mixed_precision: true
+-  precision: "16-mixed"
++  precision: "16"
+   vae_precision: fp32
+   gradient_checkpointing: false
+   num_workers: 8

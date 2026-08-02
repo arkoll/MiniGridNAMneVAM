@@ -1,0 +1,10 @@
+defaults:
+  - baba/base
+
+name: "baba"
+frame_interval: 1
+loader:
+  data_path: "${dataset_dir}/make_win_random_s0_n256"
+  normalize_action: false
+spec:
+  action_dim: 5

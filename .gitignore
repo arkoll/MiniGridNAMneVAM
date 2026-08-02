@@ -1,0 +1,37 @@
+# Nested repository metadata
+**/.git
+**/.git/**
+
+# Local runtime output and datasets
+/data/
+/logs/
+/runs/
+/transfer/
+**/__pycache__/
+*.py[cod]
+
+# Model checkpoints and serialized datasets
+*.ckpt
+*.pth
+*.pt
+*.msgpack
+*.npz
+*.npy
+*.pkl
+*.pickle
+*.h5
+*.hdf5
+
+# Credentials and local settings
+.env
+*.pem
+*.key
+credentials*
+
+# Documentation/demo artefacts not required to implement or run the code
+/repos/nano-world-model/assets/
+/repos/xland-minigrid-five-object/artifacts/
+/repos/xland-minigrid-five-object/figures/
+/repos/xland-minigrid-five-object/examples/
+*.ipynb
+*.egg-info/

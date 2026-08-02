@@ -1,0 +1,75 @@
+name: train
+tasks: [training]
+resume_from_checkpoint: null
+pretrained: null
+
+training:
+  optimizer:
+    lr: 1e-4
+    weight_decay: 0.01
+    lr_warmup_steps: 20
+  max_steps: 200
+  batch_size: 8
+  gradient_accumulation: 1
+  gradient_clip_norm: 1.0
+  gradient_clip_start_step: 0
+  log_every: 5
+  val_every_n_steps: 50
+  checkpointing:
+    across_timesteps:
+      every_n_train_steps: 100
+      save_top_k: -1
+      save_on_train_epoch_end: false
+      save_weights_only: false
+      filename: "baba-joint-{epoch}-{step}"
+    latest:
+      every_n_train_steps: 25
+      save_top_k: 1
+      save_on_train_epoch_end: false
+      save_weights_only: false
+      filename: "latest-{epoch}-{step}"
+
+joint_action:
+  enabled: true
+  num_classes: 5
+  num_transitions: 3
+  hidden_size: 256
+  num_layers: 2
+  num_heads: 4
+  dropout: 0.1
+  loss_weight: 1.0
+
+evaluation:
+  batch_size: 8
+  validation_size: 64
+  save_videos: false
+  scheduling_mode: null
+  num_sampling_steps: 25
+  metrics:
+    evaluate: false
+    log_every_n_train_steps: 1000
+    buffer_size: 8
+    max_batchsize: 2
+    i3d_model_path: null
+
+diffusion:
+  noise_schedule: "squaredcos_cap_v2"
+  diffusion_steps: 1000
+  pred_name: "v"
+  mode: "diffusion_forcing"
+  snr_gamma: 5.0
+  zero_terminal_snr: true
+  timestep_sampling: "logit_normal"
+  logit_normal_mean: 0.0
+  logit_normal_std: 1.0
+  history_stabilization_level: 0.02
+
+infra:
+  mixed_precision: true
+  precision: "16"
+  vae_precision: fp32
+  gradient_checkpointing: false
+  num_workers: 4
+  compile: false
+  seed: 3407
+  num_nodes: 1

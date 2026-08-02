@@ -1,0 +1,21 @@
+# @package dataset
+name: "xland"
+frame_interval: 1
+loader:
+  n_rollout: null
+  data_path: "${dataset_dir}/exactcraft_easy_10k_128/train"
+  split_ratio: 0.9
+  validation_size: null
+  normalize_state: false
+  normalize_action: false
+  normalize_pixel: true
+  train_slice_mode: "random"
+  val_slice_mode: "exhaustive"
+  stride: 1
+  resize_mode: "stretch"
+  random_seed: 42
+  validation_fixed_subset_path: null
+  validation_fixed_subset_size: 128
+  validation_fixed_subset_seed: 4242
+spec:
+  action_dim: 6
