@@ -1,0 +1,650 @@
+diff --git a/src/callbacks.py b/src/callbacks.py
+index 60b4784..47b16cd 100644
+--- a/src/callbacks.py
++++ b/src/callbacks.py
+@@ -3,6 +3,7 @@
+ # Modified from: https://github.com/thuml/Vid2World/blob/main/main/callbacks.py
+ 
+ import os
++import json
+ import time
+ import logging
+ mainlogger = logging.getLogger('mainlogger')
+@@ -15,6 +16,7 @@ from utils.metrics import Evaluator
+ import numpy as np
+ import scipy
++from PIL import Image, ImageDraw
+ 
+ from pytorch_fid.fid_score import calculate_frechet_distance
+ 
+@@ -349,6 +351,137 @@ class MetricsLogger(Callback):
+         return x_pred, x_reconst, x_gt
+ 
+ 
++class XLandJointPredictionLogger(Callback):
++    """Save lightweight current/predicted/ground-truth comparison videos."""
++
++    ACTION_NAMES = (
++        "forward",
++        "turn_cw",
++        "turn_ccw",
++        "pickup",
++        "put_down",
++        "toggle",
++    )
++
++    def __init__(
++        self,
++        log_every_n_train_steps=5000,
++        num_samples=4,
++        num_sampling_steps=25,
++        save_dir=None,
++    ):
++        super().__init__()
++        self.log_every_n_train_steps = int(log_every_n_train_steps)
++        self.num_samples = int(num_samples)
++        self.num_sampling_steps = int(num_sampling_steps)
++        self.save_dir = save_dir
++
++    @staticmethod
++    def _labeled_strip(context, prediction, ground_truth):
++        """Build [T,H,W,C] uint8 video with three labeled panels."""
++        context = context.detach().float().clamp(0, 1).cpu().numpy()
++        prediction = prediction.detach().float().clamp(0, 1).cpu().numpy()
++        ground_truth = ground_truth.detach().float().clamp(0, 1).cpu().numpy()
++        labels = ("CURRENT RGB", "PREDICTED FUTURE", "GROUND-TRUTH FUTURE")
++        frames = []
++        for frame_idx in range(prediction.shape[0]):
++            panels = (context[0], prediction[frame_idx], ground_truth[frame_idx])
++            height, width = panels[0].shape[-2:]
++            canvas = Image.new("RGB", (3 * width, height + 24), color=(16, 16, 16))
++            draw = ImageDraw.Draw(canvas)
++            for panel_idx, (panel, label) in enumerate(zip(panels, labels)):
++                image = Image.fromarray(
++                    (np.transpose(panel, (1, 2, 0)) * 255.0).round().astype(np.uint8)
++                )
++                canvas.paste(image, (panel_idx * width, 24))
++                draw.text((panel_idx * width + 6, 5), label, fill=(255, 255, 255))
++            frames.append(np.asarray(canvas, dtype=np.uint8).copy())
++        return np.stack(frames)
++
++    @rank_zero_only
++    def on_validation_batch_end(
++        self,
++        trainer,
++        pl_module,
++        outputs,
++        batch,
++        batch_idx,
++        dataloader_idx=None,
++    ):
++        if batch_idx != 0 or trainer.sanity_checking:
++            return
++        is_val_only = trainer.state.fn == "validate"
++        should_log = is_val_only or (
++            trainer.global_step > 0
++            and trainer.global_step % self.log_every_n_train_steps == 0
++        )
++        if not should_log:
++            return
++
++        was_training = pl_module.training
++        pl_module.eval()
++        with torch.no_grad():
++            logs = pl_module.log_images(
++                batch,
++                split="val",
++                ddim_steps=self.num_sampling_steps,
++            )
++            action_logits = pl_module.predict_action_logits(batch["video"])
++        if was_training:
++            pl_module.train()
++
++        n_context = int(pl_module.args.model.n_context_frames)
++        prediction = ((logs["samples"] + 1.0) / 2.0).permute(0, 2, 1, 3, 4)
++        ground_truth = ((logs["gt"] + 1.0) / 2.0).permute(0, 2, 1, 3, 4)
++        predicted_actions = action_logits.argmax(dim=-1).cpu()
++        raw_actions = batch["action"]
++        target_actions = (
++            raw_actions.argmax(dim=-1)
++            if raw_actions.ndim == 3
++            else raw_actions.long()
++        )
++        target_actions = target_actions[:, : predicted_actions.shape[1]].cpu()
++
++        step_dir = None
++        if self.save_dir:
++            step_dir = os.path.join(
++                self.save_dir,
++                f"step_{trainer.global_step:07d}",
++            )
++            os.makedirs(step_dir, exist_ok=True)
++
++        tb_experiment = getattr(pl_module.logger, "experiment", None)
++        count = min(self.num_samples, prediction.shape[0])
++        for sample_idx in range(count):
++            context = ground_truth[sample_idx, :n_context]
++            pred_future = prediction[sample_idx, n_context:]
++            gt_future = ground_truth[sample_idx, n_context:]
++            strip = self._labeled_strip(context, pred_future, gt_future)
++            video_tensor = (
++                torch.from_numpy(strip)
++                .permute(0, 3, 1, 2)
++                .unsqueeze(0)
++                .float()
++                / 255.0
++            )
++            traj_idx = int(batch["meta_info"]["traj_idx"][sample_idx])
++            start_idx = int(batch["meta_info"]["start_idx"][sample_idx])
++            sample_name = f"traj_{traj_idx:05d}_start_{start_idx:03d}"
++            pred_names = [
++                self.ACTION_NAMES[int(action)] for action in predicted_actions[sample_idx]
++            ]
++            target_names = [
++                self.ACTION_NAMES[int(action)] for action in target_actions[sample_idx]
++            ]
++
++            if tb_experiment is not None and hasattr(tb_experiment, "add_video"):
++                tb_experiment.add_video(
++                    f"joint_prediction/{sample_name}",
++                    video_tensor,
++                    global_step=trainer.global_step,
++                    fps=2,
++                )
++                tb_experiment.add_text(
++                    f"joint_prediction/{sample_name}_actions",
++                    f"predicted: {pred_names}  \nexpert: {target_names}",
++                    global_step=trainer.global_step,
++                )
++
++            if step_dir is not None:
++                stem = os.path.join(step_dir, sample_name)
++                torchvision.io.write_video(
++                    stem + ".mp4",
++                    torch.from_numpy(strip),
++                    fps=2,
++                    video_codec="h264",
++                    options={"crf": "10"},
++                )
++                with open(stem + ".json", "w", encoding="utf-8") as handle:
++                    json.dump(
++                        {
++                            "predicted_actions": pred_names,
++                            "expert_actions": target_names,
++                            "panel_order": [
++                                "current_rgb",
++                                "predicted_future",
++                                "ground_truth_future",
++                            ],
++                        },
++                        handle,
++                        indent=2,
++                    )
++
++
+ class LatentMetricsLogger(Callback):
+     def __init__(self, log_every_n_train_steps=1000, log_latents_kwargs=None, evaluate=True):
+         super().__init__()
+diff --git a/src/configs/dataset/xland/exactcraft_easy.yaml b/src/configs/dataset/xland/exactcraft_easy.yaml
+new file mode 100644
+index 0000000..3d9ac77
+--- /dev/null
++++ b/src/configs/dataset/xland/exactcraft_easy.yaml
+@@ -0,0 +1,22 @@
++# @package dataset
++name: "xland"
++frame_interval: 1
++loader:
++  n_rollout: null
++  data_path: "${dataset_dir}/exactcraft_easy_10k/train"
++  split_ratio: 0.9
++  validation_size: null
++  normalize_state: false
++  normalize_action: false
++  normalize_pixel: true
++  train_slice_mode: "random"
++  val_slice_mode: "exhaustive"
++  stride: 1
++  resize_mode: "stretch"
++  random_seed: 42
++  validation_fixed_subset_path: null
++  validation_fixed_subset_size: 128
++  validation_fixed_subset_seed: 4242
++spec:
++  action_dim: 6
+diff --git a/src/configs/experiment/xland_joint.yaml b/src/configs/experiment/xland_joint.yaml
+new file mode 100644
+index 0000000..483e29c
+--- /dev/null
++++ b/src/configs/experiment/xland_joint.yaml
+@@ -0,0 +1,71 @@
++name: train
++tasks: [training]
++resume_from_checkpoint: null
++pretrained: null
++
++training:
++  optimizer:
++    lr: 1e-4
++    weight_decay: 0.01
++    lr_warmup_steps: 500
++  max_steps: 30000
++  batch_size: 8
++  gradient_accumulation: 1
++  gradient_clip_norm: 1.0
++  gradient_clip_start_step: 0
++  log_every: 20
++  val_every_n_steps: 1000
++  checkpointing:
++    across_timesteps:
++      every_n_train_steps: 5000
++      save_top_k: -1
++      save_on_train_epoch_end: false
++      save_weights_only: false
++      filename: "xland-joint-{epoch}-{step}"
++    latest:
++      every_n_train_steps: 500
++      save_top_k: 1
++      save_on_train_epoch_end: false
++      save_weights_only: false
++      filename: "latest-{epoch}-{step}"
++
++joint_action:
++  enabled: true
++  num_classes: 6
++  num_transitions: 3
++  hidden_size: 256
++  num_layers: 2
++  num_heads: 4
++  dropout: 0.1
++  loss_weight: 1.0
++  visualize_every_n_steps: 5000
++  visualize_samples: 4
++  visualize_sampling_steps: 25
++
++evaluation:
++  batch_size: 8
++  validation_size: 128
++  save_videos: false
++  scheduling_mode: null
++  num_sampling_steps: 25
++  metrics:
++    evaluate: false
++    log_every_n_train_steps: 5000
++    buffer_size: 1
++    max_batchsize: 2
++    i3d_model_path: null
++
++diffusion:
++  noise_schedule: "squaredcos_cap_v2"
++  diffusion_steps: 1000
++  pred_name: "v"
++  mode: "diffusion_forcing"
++  snr_gamma: 5.0
++  zero_terminal_snr: true
++  timestep_sampling: "logit_normal"
++  logit_normal_mean: 0.0
++  logit_normal_std: 1.0
++  history_stabilization_level: 0.02
++
++infra:
++  mixed_precision: true
++  precision: "16-mixed"
++  vae_precision: fp32
++  gradient_checkpointing: false
++  num_workers: 8
++  compile: false
++  seed: 3407
++  num_nodes: 1
+diff --git a/src/configs/model/nanowm_xland_s4.yaml b/src/configs/model/nanowm_xland_s4.yaml
+new file mode 100644
+index 0000000..b3b45aa
+--- /dev/null
++++ b/src/configs/model/nanowm_xland_s4.yaml
+@@ -0,0 +1,15 @@
++arch: NanoWM-S/4
++name: NanoWM-XLand-S-4-Joint
++num_frames: 4
++n_context_frames: 1
++scheduling_mode: "sequential"
++num_sampling_steps: 25
++use_action: false
++action_injection:
++  type: additive
++causal: true
++image_size: 256
++latent_size: 32
++latent_channels: 4
++extras: 1
++num_classes: 1000
+diff --git a/src/experiments/train_experiment.py b/src/experiments/train_experiment.py
+index d9e38e5..1b842c7 100644
+--- a/src/experiments/train_experiment.py
++++ b/src/experiments/train_experiment.py
+@@ -25,7 +25,12 @@ def _seed_worker(worker_id: int) -> None:
+     random.seed(worker_seed)
+     np.random.seed(worker_seed)
+ 
+-from callbacks import CUDACallback, LatentMetricsLogger, MetricsLogger
++from callbacks import (
++    CUDACallback,
++    LatentMetricsLogger,
++    MetricsLogger,
++    XLandJointPredictionLogger,
++)
+ from latent_codecs import build_latent_codec, resolve_latent_codec_config
+ from models import get_models
+ from models.discrete_action_head import DiscreteActionHead
+@@ -47,7 +52,7 @@ class NanoWMTrainingModule(LightningModule):
+         self.action_head = None
+         if self.joint_action_enabled:
+             if args.model.use_action:
+                 raise ValueError(
+-                    "Baba joint prediction requires model.use_action=false: "
++                    "Joint prediction requires model.use_action=false: "
+                     "actions are outputs, not video-model conditioning."
+                 )
+             self.model.capture_hidden_features = True
+@@ -91,21 +96,44 @@ class NanoWMTrainingModule(LightningModule):
+         self.model.train()
+         print("[Init] NanoWMTrainingModule initialized", flush=True)
+ 
+-    def _compute_action_metrics(self, batch):
+-        if not self.joint_action_enabled:
+-            return None
++    def _action_logits_from_context(self, clean_context_latents):
++        """Predict actions from clean observed frames, never future GT frames."""
++        if self.action_head is None:
++            raise RuntimeError("Joint action head is disabled")
++        context_timesteps = torch.zeros(
++            clean_context_latents.shape[:2],
++            dtype=torch.long,
++            device=clean_context_latents.device,
++        )
++        self.model(clean_context_latents, context_timesteps, y=None)
+         feature_model = getattr(self.model, "_orig_mod", self.model)
+         features = feature_model.last_hidden_features
+         if features is None:
+             raise RuntimeError("NanoWM did not expose hidden features for action readout")
++        return self.action_head(features)
+ 
+-        logits = self.action_head(features)
++    def _compute_action_metrics(self, batch, clean_context_latents):
++        if not self.joint_action_enabled:
++            return None
++        logits = self._action_logits_from_context(clean_context_latents)
+         raw_targets = batch["action"].to(self.device)
+         num_transitions = logits.shape[1]
+         if raw_targets.shape[1] < num_transitions:
+@@ -124,7 +152,26 @@ class NanoWMTrainingModule(LightningModule):
+             targets.reshape(-1),
+         )
+         action_accuracy = (logits.argmax(dim=-1) == targets).float().mean()
+-        return action_loss, action_accuracy
++        sequence_accuracy = (
++            logits.argmax(dim=-1) == targets
++        ).all(dim=-1).float().mean()
++        return action_loss, action_accuracy, sequence_accuracy
++
++    @torch.no_grad()
++    def predict_action_logits(self, video):
++        """Inference helper for closed-loop policy and validation renders."""
++        n_context = int(self.args.model.n_context_frames)
++        context = video[:, :n_context].to(self.device)
++        batch_size = context.shape[0]
++        context = rearrange(
++            context,
++            "b f c h w -> (b f) c h w",
++        ).contiguous()
++        context = self._vae_encode(context)
++        context = rearrange(
++            context,
++            "(b f) c h w -> b f c h w",
++            b=batch_size,
++        ).contiguous()
++        return self._action_logits_from_context(context)
+ 
+     def _sanity_check_latent_codec(self, args):
+         """Encode+decode a random batch to catch codec shape and NaN issues."""
+@@ -286,14 +333,16 @@ class NanoWMTrainingModule(LightningModule):
+ 
+         loss_dict = self.diffusion.training_losses(self.model, x, t, model_kwargs)
+         video_loss = loss_dict["loss"].mean()
+-        action_metrics = self._compute_action_metrics(batch)
++        n_context = int(self.args.model.n_context_frames)
++        action_metrics = self._compute_action_metrics(batch, x[:, :n_context])
+         if action_metrics is None:
+             loss = video_loss
+         else:
+-            action_loss, action_accuracy = action_metrics
++            action_loss, action_accuracy, sequence_accuracy = action_metrics
+             loss = video_loss + self.action_loss_weight * action_loss
+             self.log("train/action_loss", action_loss, logger=True, sync_dist=True, batch_size=x.shape[0])
+             self.log("train/action_accuracy", action_accuracy, prog_bar=True, logger=True, sync_dist=True, batch_size=x.shape[0])
++            self.log("train/action_sequence_accuracy", sequence_accuracy, logger=True, sync_dist=True, batch_size=x.shape[0])
+             self.log("train/video_loss", video_loss, logger=True, sync_dist=True, batch_size=x.shape[0])
+ 
+         if self.global_step < self.args.experiment.training.gradient_clip_start_step:
+@@ -351,14 +400,16 @@ class NanoWMTrainingModule(LightningModule):
+ 
+             loss_dict = self.diffusion.training_losses(self.model, x, t, model_kwargs)
+             video_loss = loss_dict["loss"].mean()
+-            action_metrics = self._compute_action_metrics(batch)
++            n_context = int(self.args.model.n_context_frames)
++            action_metrics = self._compute_action_metrics(batch, x[:, :n_context])
+             if action_metrics is None:
+                 loss = video_loss
+             else:
+-                action_loss, action_accuracy = action_metrics
++                action_loss, action_accuracy, sequence_accuracy = action_metrics
+                 loss = video_loss + self.action_loss_weight * action_loss
+                 self.log("val/action_loss", action_loss, on_step=False, on_epoch=True, logger=True, sync_dist=True, batch_size=x.shape[0])
+                 self.log("val/action_accuracy", action_accuracy, on_step=False, on_epoch=True, prog_bar=True, logger=True, sync_dist=True, batch_size=x.shape[0])
++                self.log("val/action_sequence_accuracy", sequence_accuracy, on_step=False, on_epoch=True, logger=True, sync_dist=True, batch_size=x.shape[0])
+                 self.log("val/video_loss", video_loss, on_step=False, on_epoch=True, logger=True, sync_dist=True, batch_size=x.shape[0])
+ 
+             self.log("val_loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True, sync_dist=True, batch_size=x.shape[0])
+@@ -786,6 +837,17 @@ class TrainExperiment(BaseExperiment):
+                 evaluate=eval_metrics_cfg.evaluate,
+             ))
+ 
++        joint_cfg = args.experiment.get("joint_action", {})
++        visualize_every = int(joint_cfg.get("visualize_every_n_steps", 0))
++        if bool(joint_cfg.get("enabled", False)) and visualize_every > 0:
++            callbacks_list.append(XLandJointPredictionLogger(
++                log_every_n_train_steps=visualize_every,
++                num_samples=int(joint_cfg.get("visualize_samples", 4)),
++                num_sampling_steps=int(joint_cfg.get("visualize_sampling_steps", 25)),
++                save_dir=os.path.join(experiment_dir, "joint_videos"),
++            ))
++
+         return {
+             "experiment_dir": experiment_dir,
+             "checkpoint_dir": checkpoint_dir,
+diff --git a/src/models/nanowm.py b/src/models/nanowm.py
+index fbf3ba4..e05aca7 100644
+--- a/src/models/nanowm.py
++++ b/src/models/nanowm.py
+@@ -575,7 +575,7 @@ class NanoWM(nn.Module):
+ 
+             # Add Time Embedding (only at the first temporal block)
+             if i == 0:
+-                x = x + self.temp_embed
++                x = x + self.temp_embed[:, :frames]
+ 
+             if self.extras == 2:
+                 raise ValueError("extras == 2 is not supported for Compression Forcing's purpose")
+diff --git a/src/wm_datasets/__init__.py b/src/wm_datasets/__init__.py
+index be826dd..c50f149 100644
+--- a/src/wm_datasets/__init__.py
++++ b/src/wm_datasets/__init__.py
+@@ -11,6 +11,7 @@ from .data_source import (
+     DataSource,
+     DinoWorldModelDataSource,
+     BabaDataSource,
++    XLandDataSource,
+     LeRobotDataSource,
+     TrajectoryData,
+     create_data_source,
+@@ -26,6 +27,7 @@ __all__ = [
+     "DataSource",
+     "DinoWorldModelDataSource",
+     "BabaDataSource",
++    "XLandDataSource",
+     "LeRobotDataSource",
+     "TrajectoryData",
+     "create_data_source",
+diff --git a/src/wm_datasets/data_source/__init__.py b/src/wm_datasets/data_source/__init__.py
+index 769bb3a..5fbbdc4 100644
+--- a/src/wm_datasets/data_source/__init__.py
++++ b/src/wm_datasets/data_source/__init__.py
+@@ -6,6 +6,7 @@ from .dino_wm import DinoWorldModelDataSource, PushTDataSource, DeformableEnvData
+ from .lerobot import LeRobotDataSource
+ from .baba import BabaDataSource
++from .xland import XLandDataSource
+ from .factory import create_data_source
+ 
+ __all__ = [
+@@ -17,5 +18,6 @@ __all__ = [
+     "DeformableEnvDataSource",
+     "LeRobotDataSource",
+     "BabaDataSource",
++    "XLandDataSource",
+     "create_data_source",
+ ]
+diff --git a/src/wm_datasets/data_source/factory.py b/src/wm_datasets/data_source/factory.py
+index 6b90a73..12bed20 100644
+--- a/src/wm_datasets/data_source/factory.py
++++ b/src/wm_datasets/data_source/factory.py
+@@ -8,6 +8,7 @@ from .lerobot import LeRobotDataSource
+ from .game import CSGODataSource
+ from .baba import BabaDataSource
++from .xland import XLandDataSource
+ from .base import DataSource
+ 
+ 
+@@ -83,7 +84,14 @@ def create_data_source(
+             **kwargs,
+         )
+ 
++    if dataset_name == "xland":
++        return XLandDataSource(
++            data_path=data_path,
++            n_rollout=n_rollout,
++            **kwargs,
++        )
++
+     raise ValueError(
+         f"Unknown dataset: {dataset_name}. "
+-        f"Supported: point_maze, wall, pusht, rope, granular, rt1, csgo, baba"
++        f"Supported: point_maze, wall, pusht, rope, granular, rt1, csgo, baba, xland"
+     )
+diff --git a/src/wm_datasets/data_source/xland.py b/src/wm_datasets/data_source/xland.py
+new file mode 100644
+index 0000000..17dd6bd
+--- /dev/null
++++ b/src/wm_datasets/data_source/xland.py
+@@ -0,0 +1,97 @@
++"""RGB-only XLand ExactCraft trajectories for NanoWM."""
++
++from functools import lru_cache
++import json
++from pathlib import Path
++from typing import Dict
++
++import numpy as np
++import torch
++import torch.nn.functional as F
++
++from .base import DataSource, TrajectoryData
++
++
++class XLandDataSource(DataSource):
++    """Load atomic PPO episodes without exposing rule/goal encodings."""
++
++    NUM_ACTIONS = 6
++
++    def __init__(self, data_path: str, n_rollout=None, **_kwargs):
++        self.data_path = Path(data_path).expanduser().resolve()
++        if not self.data_path.is_dir():
++            raise FileNotFoundError(
++                f"XLand dataset directory not found: {self.data_path}"
++            )
++
++        self.files = sorted(self.data_path.rglob("episode_train_*.npz"))
++        if n_rollout is not None:
++            self.files = self.files[: int(n_rollout)]
++        if not self.files:
++            raise FileNotFoundError(
++                f"No episode_train_*.npz files found below {self.data_path}"
++            )
++
++    @lru_cache(maxsize=16)
++    def _load_episode(self, index: int) -> Dict:
++        path = self.files[index]
++        with np.load(path, allow_pickle=False) as episode:
++            rgb = np.asarray(episode["rgb"], dtype=np.uint8)
++            actions = np.asarray(episode["actions"], dtype=np.int64)
++            metadata = {}
++            if "metadata" in episode:
++                raw = episode["metadata"]
++                raw = raw.item() if raw.ndim == 0 else str(raw)
++                metadata = json.loads(raw)
++
++        if rgb.ndim != 4 or rgb.shape[-1] != 3:
++            raise ValueError(f"Expected [T,H,W,3] RGB in {path}, got {rgb.shape}")
++        if rgb.shape[0] != actions.shape[0] + 1:
++            raise ValueError(
++                f"Broken transition alignment in {path}: "
++                f"{rgb.shape[0]} frames for {actions.shape[0]} actions"
++            )
++        if actions.size and (
++            actions.min() < 0 or actions.max() >= self.NUM_ACTIONS
++        ):
++            raise ValueError(f"Out-of-range action in {path}")
++
++        # These may exist in collector archives for audit/stratification, but
++        # are intentionally inaccessible to the training sample.
++        metadata.pop("rule_encoding", None)
++        metadata.pop("goal_encoding", None)
++        return {"rgb": rgb, "actions": actions, "metadata": metadata}
++
++    def load_trajectory(self, index: int) -> TrajectoryData:
++        episode = self._load_episode(index)
++        actions = torch.from_numpy(episode["actions"]).long()
++        actions = F.one_hot(actions, num_classes=self.NUM_ACTIONS).float()
++        idle_padding = torch.zeros(1, self.NUM_ACTIONS, dtype=torch.float32)
++        idle_padding[0, 0] = 1.0
++        actions = torch.cat([actions, idle_padding], dim=0)
++        states = torch.empty(actions.shape[0], 0, dtype=torch.float32)
++        return TrajectoryData(
++            states=states,
++            actions=actions,
++            seq_length=actions.shape[0],
++            meta=episode["metadata"],
++        )
++
++    def get_seq_length(self, index: int) -> int:
++        return int(self._load_episode(index)["rgb"].shape[0])
++
++    def load_visual_frames(
++        self,
++        index: int,
++        start: int,
++        end: int,
++        step: int = 1,
++    ) -> torch.Tensor:
++        rgb = self._load_episode(index)["rgb"][start:end:step]
++        frames = torch.from_numpy(np.ascontiguousarray(rgb)).float() / 255.0
++        return frames.permute(0, 3, 1, 2).contiguous()
++
++    def get_num_trajectories(self) -> int:
++        return len(self.files)
++
++    @property
++    def action_dim(self) -> int:
++        return self.NUM_ACTIONS
++
++    @property
++    def state_dim(self) -> int:
++        return 0

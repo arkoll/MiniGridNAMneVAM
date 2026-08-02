@@ -1,0 +1,15 @@
+arch: NanoWM-S/2
+name: NanoWM-Baba-S-2
+num_frames: 4
+n_context_frames: 1
+scheduling_mode: "sequential"
+num_sampling_steps: 25
+use_action: false
+action_injection:
+  type: additive
+causal: true
+image_size: 128
+latent_size: 16
+latent_channels: 4
+extras: 1
+num_classes: 1000
