@@ -1,0 +1,3326 @@
+diff --git a/src/xminigrid/__init__.py b/src/xminigrid/__init__.py
+index d9dd581..e40426d 100644
+--- a/src/xminigrid/__init__.py
++++ b/src/xminigrid/__init__.py
+@@ -406,3 +406,202 @@ register(
+     id="MiniGrid-UnlockPickUp",
+     entry_point="xminigrid.envs.minigrid.unlockpickup:UnlockPickUp",
+ )
++
++# Project-specific five-object TileNear crafting benchmark.
++register(
++    id="XLand-MiniGrid-FiveObjectCrafting-8x8",
++    entry_point="xminigrid.envs.five_object_crafting:FiveObjectCraftingEnv",
++    height=8,
++    width=8,
++    view_size=8,
++    max_steps=256,
++)
++
++# Stable v1 name for the original exact (shape + color) crafting dynamics.
++register(
++    id="XLand-MiniGrid-ExactCraft-8x8-v1",
++    entry_point="xminigrid.envs.five_object_crafting:ExactCraftEnv",
++    height=8,
++    width=8,
++    view_size=8,
++    max_steps=256,
++)
++
++# Color-invariant shape-only crafting dynamics with a strict color-binding
++# generalization split.
++register(
++    id="XLand-MiniGrid-ShapeCraft-8x8-v1",
++    entry_point="xminigrid.envs.shape_crafting:ShapeCraftEnv",
++    height=8,
++    width=8,
++    view_size=8,
++    max_steps=256,
++)
++
++# ExactCraft world dynamics under four agent embodiments. The task rules,
++# train/validation split, map generator, and interaction actions are shared.
++register(
++    id="XLand-MiniGrid-EmbodiedExactCraft-Standard-8x8-v1",
++    entry_point="xminigrid.envs.embodied_crafting:StandardEmbodiedCraftEnv",
++    height=8,
++    width=8,
++    view_size=8,
++    max_steps=256,
++)
++
++register(
++    id="XLand-MiniGrid-EmbodiedExactCraft-Stride2-8x8-v1",
++    entry_point="xminigrid.envs.embodied_crafting:Stride2EmbodiedCraftEnv",
++    height=8,
++    width=8,
++    view_size=8,
++    max_steps=256,
++)
++
++register(
++    id="XLand-MiniGrid-EmbodiedExactCraft-Omni8-8x8-v1",
++    entry_point="xminigrid.envs.embodied_crafting:Omni8EmbodiedCraftEnv",
++    height=8,
++    width=8,
++    view_size=8,
++    max_steps=256,
++)
++
++register(
++    id="XLand-MiniGrid-EmbodiedExactCraft-Crab-8x8-v1",
++    entry_point="xminigrid.envs.embodied_crafting:CrabEmbodiedCraftEnv",
++    height=8,
++    width=8,
++    view_size=8,
++    max_steps=256,
++)
++
++# Canonical difficulty-qualified IDs. Unqualified IDs above remain aliases.
++register(
++    id="XLand-MiniGrid-ExactCraft-Medium-8x8-v1",
++    entry_point="xminigrid.envs.five_object_crafting:ExactCraftEnv",
++    height=8,
++    width=8,
++    view_size=8,
++    max_steps=256,
++)
++
++register(
++    id="XLand-MiniGrid-ExactCraft-Easy-8x8-v1",
++    entry_point="xminigrid.envs.easy_crafting:ExactCraftEasyEnv",
++    height=8,
++    width=8,
++    view_size=8,
++    max_steps=192,
++)
++
++register(
++    id="XLand-MiniGrid-ShapeCraft-Medium-8x8-v1",
++    entry_point="xminigrid.envs.shape_crafting:ShapeCraftEnv",
++    height=8,
++    width=8,
++    view_size=8,
++    max_steps=256,
++)
++
++register(
++    id="XLand-MiniGrid-ShapeCraft-Easy-8x8-v1",
++    entry_point="xminigrid.envs.shape_crafting_easy:ShapeCraftEasyEnv",
++    height=8,
++    width=8,
++    view_size=8,
++    max_steps=192,
++)
++
++register(
++    id="XLand-MiniGrid-EmbodiedExactCraft-Standard-Medium-8x8-v1",
++    entry_point="xminigrid.envs.embodied_crafting:StandardEmbodiedCraftEnv",
++    height=8,
++    width=8,
++    view_size=8,
++    max_steps=256,
++)
++
++register(
++    id="XLand-MiniGrid-EmbodiedExactCraft-Stride2-Medium-8x8-v1",
++    entry_point="xminigrid.envs.embodied_crafting:Stride2EmbodiedCraftEnv",
++    height=8,
++    width=8,
++    view_size=8,
++    max_steps=256,
++)
++
++# Explicit locomotion-qualified alias.  "Stride2" has always used the
++# progressive adaptive fallback; this name makes that behavior unambiguous in
++# experiment manifests.
++register(
++    id="XLand-MiniGrid-EmbodiedExactCraft-Stride2-Adaptive-Medium-8x8-v1",
++    entry_point="xminigrid.envs.embodied_crafting:Stride2EmbodiedCraftEnv",
++    height=8,
++    width=8,
++    view_size=8,
++    max_steps=256,
++)
++
++register(
++    id="XLand-MiniGrid-EmbodiedExactCraft-Omni8-Medium-8x8-v1",
++    entry_point="xminigrid.envs.embodied_crafting:Omni8EmbodiedCraftEnv",
++    height=8,
++    width=8,
++    view_size=8,
++    max_steps=256,
++)
++
++register(
++    id="XLand-MiniGrid-EmbodiedExactCraft-Crab-Medium-8x8-v1",
++    entry_point="xminigrid.envs.embodied_crafting:CrabEmbodiedCraftEnv",
++    height=8,
++    width=8,
++    view_size=8,
++    max_steps=256,
++)
++
++register(
++    id="XLand-MiniGrid-EmbodiedExactCraft-Standard-Easy-8x8-v1",
++    entry_point="xminigrid.envs.embodied_crafting:StandardEmbodiedCraftEasyEnv",
++    height=8,
++    width=8,
++    view_size=8,
++    max_steps=192,
++)
++
++register(
++    id="XLand-MiniGrid-EmbodiedExactCraft-Stride2-Easy-8x8-v1",
++    entry_point="xminigrid.envs.embodied_crafting:Stride2EmbodiedCraftEasyEnv",
++    height=8,
++    width=8,
++    view_size=8,
++    max_steps=192,
++)
++
++register(
++    id="XLand-MiniGrid-EmbodiedExactCraft-Stride2-Adaptive-Easy-8x8-v1",
++    entry_point="xminigrid.envs.embodied_crafting:Stride2EmbodiedCraftEasyEnv",
++    height=8,
++    width=8,
++    view_size=8,
++    max_steps=192,
++)
++
++register(
++    id="XLand-MiniGrid-EmbodiedExactCraft-Omni8-Easy-8x8-v1",
++    entry_point="xminigrid.envs.embodied_crafting:Omni8EmbodiedCraftEasyEnv",
++    height=8,
++    width=8,
++    view_size=8,
++    max_steps=192,
++)
++
++register(
++    id="XLand-MiniGrid-EmbodiedExactCraft-Crab-Easy-8x8-v1",
++    entry_point="xminigrid.envs.embodied_crafting:CrabEmbodiedCraftEasyEnv",
++    height=8,
++    width=8,
++    view_size=8,
++    max_steps=192,
++)
+diff --git a/src/xminigrid/core/constants.py b/src/xminigrid/core/constants.py
+index f9b9241..d758005 100644
+--- a/src/xminigrid/core/constants.py
++++ b/src/xminigrid/core/constants.py
+@@ -5,7 +5,7 @@ NUM_ACTIONS = 6
+ 
+ # GRID: [tile, color]
+ NUM_LAYERS = 2
+-NUM_TILES = 13
++NUM_TILES = 14
+ NUM_COLORS = 12
+ 
+ 
+@@ -24,6 +24,7 @@ class Tiles(struct.PyTreeNode):
+     DOOR_OPEN: int = struct.field(pytree_node=False, default=10)
+     HEX: int = struct.field(pytree_node=False, default=11)
+     STAR: int = struct.field(pytree_node=False, default=12)
++    DIAMOND: int = struct.field(pytree_node=False, default=13)
+ 
+ 
+ class Colors(struct.PyTreeNode):
+@@ -75,6 +76,7 @@ PICKABLE = jnp.array(
+         Tiles.KEY,
+         Tiles.HEX,
+         Tiles.STAR,
++        Tiles.DIAMOND,
+     )
+ )
+ 
+diff --git a/src/xminigrid/core/rules.py b/src/xminigrid/core/rules.py
+index 67d2461..4d1faec 100644
+--- a/src/xminigrid/core/rules.py
++++ b/src/xminigrid/core/rules.py
+@@ -12,7 +12,7 @@ from .constants import TILES_REGISTRY, Colors, Tiles
+ from .grid import equal, get_neighbouring_tiles, pad_along_axis
+ 
+ MAX_RULE_ENCODING_LEN = 6 + 1  # +1 for idx
+-NUM_RULES = 12
++NUM_RULES = 13
+ 
+ 
+ # this is very costly, will evaluate all rules under vmap. Submit a PR if you know how to do it better!
+@@ -40,6 +40,7 @@ def check_rule(
+                 lambda: AgentNearRightRule.decode(encoding)(grid, agent, action, position),
+                 lambda: AgentNearDownRule.decode(encoding)(grid, agent, action, position),
+                 lambda: AgentNearLeftRule.decode(encoding)(grid, agent, action, position),
++                lambda: ShapeTileNearRule.decode(encoding)(grid, agent, action, position),
+             ),
+         )
+         return (grid, agent), None
+@@ -191,6 +192,82 @@ class TileNearRule(BaseRule):
+         return pad_along_axis(encoding, MAX_RULE_ENCODING_LEN)
+ 
+ 
++class ShapeTileNearRule(BaseRule):
++    """Transform adjacent shapes regardless of the two input colors.
++
++    The produced object keeps the full tile/color identity specified by the
++    task.  Shape order is intentionally symmetric.
++    """
++
++    shape_a: jax.Array
++    shape_b: jax.Array
++    prod_tile: jax.Array
++
++    def __call__(self, grid, agent, action, position):
++        tile = grid[position[0], position[1]]
++        tile_shape = tile[0]
++
++        def _matches_pair(other_tile):
++            other_shape = other_tile[0]
++            return (
++                (jnp.equal(tile_shape, self.shape_a) & jnp.equal(other_shape, self.shape_b))
++                | (jnp.equal(tile_shape, self.shape_b) & jnp.equal(other_shape, self.shape_a))
++            )
++
++        def _rule_fn(grid):
++            floor_tile = TILES_REGISTRY[Tiles.FLOOR, Colors.BLACK]
++            y, x = position
++            up, right, down, left = get_neighbouring_tiles(grid, y, x)
++
++            grid = jax.lax.select(
++                _matches_pair(up),
++                grid.at[y - 1, x].set(self.prod_tile).at[y, x].set(floor_tile),
++                grid,
++            )
++            grid = jax.lax.select(
++                _matches_pair(right),
++                grid.at[y, x + 1].set(self.prod_tile).at[y, x].set(floor_tile),
++                grid,
++            )
++            grid = jax.lax.select(
++                _matches_pair(down),
++                grid.at[y + 1, x].set(self.prod_tile).at[y, x].set(floor_tile),
++                grid,
++            )
++            grid = jax.lax.select(
++                _matches_pair(left),
++                grid.at[y, x - 1].set(self.prod_tile).at[y, x].set(floor_tile),
++                grid,
++            )
++            return grid
++
++        is_input_shape = jnp.equal(tile_shape, self.shape_a) | jnp.equal(tile_shape, self.shape_b)
++        grid = jax.lax.cond(
++            jnp.equal(action, 4) & is_input_shape,
++            lambda: _rule_fn(grid),
++            lambda: grid,
++        )
++        return grid, agent
++
++    @classmethod
++    def decode(cls, encoding):
++        return cls(
++            shape_a=encoding[1],
++            shape_b=encoding[2],
++            prod_tile=encoding[3:5],
++        )
++
++    def encode(self):
++        encoding = jnp.hstack(
++            (
++                jnp.asarray([12], dtype=jnp.uint8),
++                jnp.asarray([self.shape_a, self.shape_b], dtype=jnp.uint8),
++                self.prod_tile,
++            )
++        )
++        return pad_along_axis(encoding, MAX_RULE_ENCODING_LEN)
++
++
+ # tile_b should be one tile up near the tile_a
+ class TileNearUpRule(BaseRule):
+     tile_a: jax.Array
+diff --git a/src/xminigrid/envs/__init__.py b/src/xminigrid/envs/__init__.py
+index 40f12d5..86003a2 100644
+--- a/src/xminigrid/envs/__init__.py
++++ b/src/xminigrid/envs/__init__.py
+@@ -7,6 +7,20 @@ from .minigrid.memory import Memory
+ from .minigrid.playground import Playground
+ from .minigrid.unlock import Unlock
+ from .minigrid.unlockpickup import UnlockPickUp
++from .five_object_crafting import ExactCraftEnv, FiveObjectCraftingEnv
++from .embodied_crafting import (
++    CrabEmbodiedCraftEasyEnv,
++    CrabEmbodiedCraftEnv,
++    Omni8EmbodiedCraftEasyEnv,
++    Omni8EmbodiedCraftEnv,
++    StandardEmbodiedCraftEasyEnv,
++    StandardEmbodiedCraftEnv,
++    Stride2EmbodiedCraftEasyEnv,
++    Stride2EmbodiedCraftEnv,
++)
++from .easy_crafting import ExactCraftEasyEnv
++from .shape_crafting import ShapeCraftEnv
++from .shape_crafting_easy import ShapeCraftEasyEnv
+ from .xland import XLandMiniGrid
+ 
+ __all__ = [
+@@ -20,5 +34,18 @@ __all__ = [
+     "Playground",
+     "Unlock",
+     "UnlockPickUp",
++    "FiveObjectCraftingEnv",
++    "ExactCraftEnv",
++    "ExactCraftEasyEnv",
++    "StandardEmbodiedCraftEnv",
++    "Stride2EmbodiedCraftEnv",
++    "Omni8EmbodiedCraftEnv",
++    "CrabEmbodiedCraftEnv",
++    "StandardEmbodiedCraftEasyEnv",
++    "Stride2EmbodiedCraftEasyEnv",
++    "Omni8EmbodiedCraftEasyEnv",
++    "CrabEmbodiedCraftEasyEnv",
++    "ShapeCraftEnv",
++    "ShapeCraftEasyEnv",
+     "XLandMiniGrid",
+ ]
+diff --git a/src/xminigrid/rendering/rgb_render.py b/src/xminigrid/rendering/rgb_render.py
+index 769c4ed..bc16f86 100644
+--- a/src/xminigrid/rendering/rgb_render.py
++++ b/src/xminigrid/rendering/rgb_render.py
+@@ -86,6 +86,15 @@ def _render_hex(img: np.ndarray, color: int):
+     fill_coords(img, point_in_hexagon(0.35), COLORS_MAP[color])
+ 
+ 
++def _render_diamond(img: np.ndarray, color: int):
++    _render_floor(img, Colors.BLACK)
++
++    def point_in_diamond(x: float, y: float) -> bool:
++        return abs(x - 0.5) + abs(y - 0.5) <= 0.36
++
++    fill_coords(img, point_in_diamond, COLORS_MAP[color])
++
++
+ def _render_star(img: np.ndarray, color: int):
+     # yes, this is a hexagram not a star, but who cares...
+     _render_floor(img, Colors.BLACK)
+@@ -171,6 +180,7 @@ TILES_FN_MAP = {
+     Tiles.SQUARE: _render_square,
+     Tiles.PYRAMID: _render_pyramid,
+     Tiles.HEX: _render_hex,
++    Tiles.DIAMOND: _render_diamond,
+     Tiles.STAR: _render_star,
+     Tiles.GOAL: _render_goal,
+     Tiles.KEY: _render_key,
+diff --git a/src/xminigrid/rendering/text_render.py b/src/xminigrid/rendering/text_render.py
+index 8256166..4697f2b 100644
+--- a/src/xminigrid/rendering/text_render.py
++++ b/src/xminigrid/rendering/text_render.py
+@@ -30,6 +30,7 @@ TILE_STR = {
+     Tiles.PYRAMID: "▲",
+     Tiles.HEX: "⬢",
+     Tiles.STAR: "★",
++    Tiles.DIAMOND: "◆",
+     Tiles.GOAL: "■",
+     Tiles.DOOR_LOCKED: "L",
+     Tiles.DOOR_CLOSED: "C",
+@@ -47,6 +48,7 @@ RULE_TILE_STR = {
+     Tiles.KEY: "key",
+     Tiles.HEX: "hexagon",
+     Tiles.STAR: "star",
++    Tiles.DIAMOND: "diamond",
+ }
+ 
+ PLAYER_STR = {0: "^", 1: ">", 2: "V", 3: "<"}
+diff --git a/home/user8_3/xland/xland-minigrid-five-object/CRAFTING_ENVIRONMENTS.md b/home/user8_3/xland/xland-minigrid-five-object/CRAFTING_ENVIRONMENTS.md
+new file mode 100644
+index 0000000..220d3c4
+--- /dev/null
++++ b/home/user8_3/xland/xland-minigrid-five-object/CRAFTING_ENVIRONMENTS.md
+@@ -0,0 +1,257 @@
++# Easy and Medium crafting environments for XLand-MiniGrid
++
++This bundle contains difficulty-qualified ExactCraft, ShapeCraft, and
++four-embodiment ExactCraft families:
++
++| Family | Easy canonical ID | Medium canonical ID |
++|---|---|---|
++| ExactCraft | `XLand-MiniGrid-ExactCraft-Easy-8x8-v1` | `XLand-MiniGrid-ExactCraft-Medium-8x8-v1` |
++| ShapeCraft | `XLand-MiniGrid-ShapeCraft-Easy-8x8-v1` | `XLand-MiniGrid-ShapeCraft-Medium-8x8-v1` |
++| Embodied | `XLand-MiniGrid-EmbodiedExactCraft-{body}-Easy-8x8-v1` | `XLand-MiniGrid-EmbodiedExactCraft-{body}-Medium-8x8-v1` |
++
++Here `{body}` is `Standard`, `Stride2`, `Omni8`, or `Crab`. All former
++difficulty-unqualified IDs remain Medium aliases, including
++`XLand-MiniGrid-FiveObjectCrafting-8x8`, so existing scripts and checkpoints
++continue to work.
++
++The explicit aliases
++`XLand-MiniGrid-EmbodiedExactCraft-Stride2-Adaptive-{Easy,Medium}-8x8-v1`
++refer to the same progressive fallback locomotion as the shorter `Stride2`
++IDs. Prefer the explicit name in new experiment manifests.
++
++## Difficulty definition
++
++Easy and Medium intentionally share the same 8×8 layout, observation,
++interaction mechanics, door/key/star objective, object identities, and
++primitive-rule semantics. Difficulty changes only the size and depth of the
++crafting dynamics:
++
++| Property | Easy | Medium |
++|---|---:|---:|
++| Primitive rules | 6 | 9 |
++| Active rules per episode | 2 | 3 |
++| Crafting depth | 2 | 3 |
++| Ordinary object roles | 4 | 5 |
++| Initial ingredient instances | 3 | 4 |
++| Abstract trees | 9 | 27 |
++| Recommended horizon | 192 | 256 |
++
++ExactCraft Easy has six train and three validation trees. Every primitive rule
++appears in both splits; validation holds out only unseen two-rule
++compositions. ShapeCraft Easy keeps all nine abstract trees in both splits and
++uses the same strict complementary color-binding split as Medium: 36 palettes
++per split and 324 tasks per split.
++
++## ExactCraft Medium
++
++This patch adds a deliberately small world-model benchmark:
++
++- ordinary objects: `A`, `B`, `C`, `D`, `E`;
++- special objects: blue key, blue locked door, yellow star;
++- nine non-directional `TileNear` rules;
++- 27 three-stage crafting trees;
++- split: 18 train / 9 validation;
++- every primitive rule `R1`–`R9` occurs in both splits;
++- validation holds out only complete three-rule combinations.
++
++The ordinary-object palette uses five deliberately contrasting colors:
++`A=red`, `B=green`, `C=white`, `D=purple`, and `E=orange`. Blue and yellow are
++reserved for the key/door mechanism and the star goal.
++
++## Environment
++
++The agent and four ingredient instances spawn in one of two rooms. The yellow
++star always spawns in the other room. A blue locked door separates the rooms,
++and there is no initial key. The active task's three rules must be composed to
++create the blue key. Success is `AgentNearGoal(yellow star)`.
++
++The map is 8×8. Layout mirroring is random, but the divider moves with the
++mirror: the agent and four ingredients always receive the larger three-column
++room, while the star receives the smaller two-column room. Observations use
++fixed world coordinates and expose the entire map at every step—there is no
++egocentric crop or camera rotation. The symbolic `img` observation is 8×8×3:
++tile ID, color ID, and an agent layer. Rendering also shows the complete map
++without field-of-view shading.
++
++Picked-up objects remain visible in RGB frames. The carried-object sprite is
++drawn at the triangle tip inside the agent cell, follows movement, and rotates
++with agent direction. This avoids hidden visual state without changing XLand's
++safe interaction rules: walls and objects block movement, `put_down` rejects
++occupied targets, and an object can only be released onto a free adjacent floor
++cell. Pocket tile/color IDs are also included explicitly in the symbolic
++observation.
++
++Only the selected three rules are active in an episode. They are encoded in
++reverse topological order so that XLand's sequential rule scan cannot execute
++multiple crafting stages after a single `put_down`.
++
++## Files
++
++- `src/xminigrid/envs/five_object_crafting.py`: task family and environment.
++- `src/xminigrid/envs/easy_crafting.py`: depth-2 ExactCraft Easy task bank.
++- `src/xminigrid/envs/shape_crafting.py`: color-invariant ShapeCraft family.
++- `src/xminigrid/envs/shape_crafting_easy.py`: depth-2 ShapeCraft Easy family.
++- `src/xminigrid/envs/embodied_crafting.py`: four embodiment action kernels,
++  sprites, rendering, and factory.
++- `src/xminigrid/core/rules.py`: adds `ShapeTileNearRule` (encoding ID 12).
++- `src/xminigrid/core/constants.py` and rendering files: add the fifth unique
++  ordinary shape, `DIAMOND`.
++- `register_five_object_env.patch`: adds the environment to the XLand registry.
++- `scripts/check_five_object_crafting.py`: split, reset, JIT, crafting-chain,
++  and locked-door checks.
++- `scripts/check_shape_crafting.py`: strict split, shape-only dynamics,
++  registry, reset, rendering, and JIT checks.
++- `scripts/check_embodied_crafting.py`: identical-layout, transition,
++  connectivity, collision, interaction, registry, rendering, and JIT checks.
++- `scripts/check_easy_levels.py`: Easy splits, chains, color OOD, embodiments,
++  canonical IDs, JIT, and Medium compatibility checks.
++- `scripts/render_five_object_samples.py`: labelled 4×3 sample grid.
++- `scripts/render_carry_mechanics.py`: action-by-action pickup/carry/drop grid.
++- `scripts/render_scripted_episode.py`: complete successful T02 storyboard and
++  machine-readable action manifest.
++
++## Usage
++
++Copy the module and scripts into a checkout of XLand-MiniGrid at commit
++`0d306d1`, then apply `register_five_object_env.patch`.
++
++```python
++import jax
++
++from xminigrid.envs.five_object_crafting import make_env_and_params
++
++env, params, task = make_env_and_params(task_id=2)
++timestep = env.reset(params, jax.random.PRNGKey(0))
++rgb = env.render(params, timestep)
++```
++
++Easy ExactCraft:
++
++```python
++from xminigrid.envs.easy_crafting import make_easy_env_and_params
++
++env, params, task = make_easy_env_and_params(task_id=2)
++```
++
++## EmbodiedExactCraft v1
++
++All four Medium variants use the same 27 ExactCraft tasks and 18/9
++train-validation split. All four Easy variants use the same nine ExactCraft
++Easy tasks and 6/3 split. Both difficulties share the 8×8 two-room generator,
++object positions for a given seed, blue-door mechanism, full-map observation,
++visible carried object, and six discrete actions. Only the agent sprite and
++locomotion dynamics change between bodies.
++
++| Embodiment | Locomotion action (`action=0`) | Turns |
++|---|---|---|
++| Standard | one cardinal cell forward | 90 degrees |
++| Stride2-Adaptive | up to two forward microsteps | 90 degrees |
++| Omni8 | one cardinal or diagonal cell | 45 degrees |
++| Crab | one cell to the right of the current heading | 90 degrees |
++
++`Stride2-Adaptive` executes its two microsteps progressively. If both are
++walkable it moves two cells; if only the first is walkable it moves one; if the
++first is blocked it does not move. It cannot jump through a locked door or
++wall. This fallback also removes the fixed-parity reachability problem.
++
++`Omni8` has eight headings and forbids diagonal corner cutting. `Crab` changes
++position sideways while keeping its heading unchanged. All variants retain the
++same forward-facing `pickup`, `putdown`, and `toggle` semantics; Omni8 can
++interact in eight directions, while cardinal orientation remains available for
++ordinary TileNear crafting.
++
++```python
++import jax
++
++from xminigrid.envs.embodied_crafting import make_embodied_env_and_params
++
++env, params, task = make_embodied_env_and_params(
++    "stride2",
++    task_id=2,
++    difficulty="easy",
++)
++timestep = env.reset(params, jax.random.PRNGKey(19))
++timestep = env.step(params, timestep, 0)
++```
++
++## ShapeCraft Medium
++
++ShapeCraft keeps the same two-room layout, visible carried object, fixed
++full-map observation, blue locked door, and yellow-star goal. Its five ordinary
++roles have unique shapes:
++
++| role | shape |
++|---|---|
++| A | ball |
++| B | square |
++| C | pyramid |
++| D | hexagon |
++| E | diamond |
++
++The shared abstract dynamics are:
++
++```text
++R1 ball + square  -> hexagon
++R2 ball + pyramid -> hexagon
++R3 square + pyramid -> hexagon
++R4 hexagon + ball    -> diamond
++R5 hexagon + square  -> diamond
++R6 hexagon + pyramid -> diamond
++R7 diamond + ball    -> blue key
++R8 diamond + square  -> blue key
++R9 diamond + pyramid -> blue key
++```
++
++All 27 choices of one rule from each stage are present in both train and
++validation. Colors come from the same six-color vocabulary in both splits:
++red, green, orange, purple, pink, and white. For each shape, train receives
++three colors and validation receives the complementary three. Therefore:
++
++- there are no validation-only colors;
++- all abstract rules and all trees occur in both splits;
++- no concrete `(shape, color)` binding—and thus no
++  `(rule, shape, color)` binding—occurs in both splits;
++- each scene uses five distinct colors;
++- each split has 27 trees × 36 balanced palettes = 972 tasks.
++
++```python
++import jax
++
++from xminigrid.envs.shape_crafting import make_shape_env_and_params
++
++env, params, task = make_shape_env_and_params("train", task_index=1)
++timestep = env.reset(params, jax.random.PRNGKey(0))
++rgb = env.render(params, timestep)
++```
++
++Easy ShapeCraft:
++
++```python
++from xminigrid.envs.shape_crafting_easy import (
++    make_shape_easy_env_and_params,
++)
++
++env, params, task = make_shape_easy_env_and_params(
++    "train",
++    task_index=1,
++)
++```
++
++## Privileged RL trajectory-collector policy
++
++`training/train_privileged_crafting_ppo.py` implements fast PPO for the three
++Easy environments currently used for trajectory collection. The policy is
++intentionally privileged: it receives the full symbolic map, carried object,
++active rule and goal encodings, crafting progress, and a ground-truth mask of
++valid actions. Task completion is still the native `AgentNearGoal(yellow
++star)` signal. Potential-based shaping provides intermediate credit for
++creating the hexagon, creating the blue key, and opening the door.
++
++One policy is trained across every train task in its family and evaluated on
++both train and held-out validation banks. TensorBoard logs include throughput,
++PPO losses, rollout SR, in-distribution train SR, and held-out validation SR.
++Checkpoints include `latest`, `best_val`, `final`, and the first policy crossing
++train SR 5%, 20%, 50%, 80%, and 95%.
++
++See `RL_TRAINING.md` for the active server runs, GPU assignment, monitoring,
++checkpoint layout, resume command, and the exact definition of reported SR.
+diff --git a/home/user8_3/xland/xland-minigrid-five-object/FIVE_OBJECT_CRAFTING.md b/home/user8_3/xland/xland-minigrid-five-object/FIVE_OBJECT_CRAFTING.md
+new file mode 100644
+index 0000000..07ac6f0
+--- /dev/null
++++ b/home/user8_3/xland/xland-minigrid-five-object/FIVE_OBJECT_CRAFTING.md
+@@ -0,0 +1,68 @@
++# Five-object XLand-MiniGrid crafting environment
++
++This patch adds a deliberately small world-model benchmark:
++
++- ordinary objects: `A`, `B`, `C`, `D`, `E`;
++- special objects: blue key, blue locked door, yellow star;
++- nine non-directional `TileNear` rules;
++- 27 three-stage crafting trees;
++- split: 18 train / 9 validation;
++- every primitive rule `R1`–`R9` occurs in both splits;
++- validation holds out only complete three-rule combinations.
++
++The ordinary-object palette uses five deliberately contrasting colors:
++`A=red`, `B=green`, `C=white`, `D=purple`, and `E=orange`. Blue and yellow are
++reserved for the key/door mechanism and the star goal.
++
++## Environment
++
++The agent and four ingredient instances spawn in one of two rooms. The yellow
++star always spawns in the other room. A blue locked door separates the rooms,
++and there is no initial key. The active task's three rules must be composed to
++create the blue key. Success is `AgentNearGoal(yellow star)`.
++
++The map is 8×8. Layout mirroring is random, but the divider moves with the
++mirror: the agent and four ingredients always receive the larger three-column
++room, while the star receives the smaller two-column room. Observations use
++fixed world coordinates and expose the entire map at every step—there is no
++egocentric crop or camera rotation. The symbolic `img` observation is 8×8×3:
++tile ID, color ID, and an agent layer. Rendering also shows the complete map
++without field-of-view shading.
++
++Picked-up objects remain visible in RGB frames. The carried-object sprite is
++drawn at the triangle tip inside the agent cell, follows movement, and rotates
++with agent direction. This avoids hidden visual state without changing XLand's
++safe interaction rules: walls and objects block movement, `put_down` rejects
++occupied targets, and an object can only be released onto a free adjacent floor
++cell. Pocket tile/color IDs are also included explicitly in the symbolic
++observation.
++
++Only the selected three rules are active in an episode. They are encoded in
++reverse topological order so that XLand's sequential rule scan cannot execute
++multiple crafting stages after a single `put_down`.
++
++## Files
++
++- `src/xminigrid/envs/five_object_crafting.py`: task family and environment.
++- `register_five_object_env.patch`: adds the environment to the XLand registry.
++- `scripts/check_five_object_crafting.py`: split, reset, JIT, crafting-chain,
++  and locked-door checks.
++- `scripts/render_five_object_samples.py`: labelled 4×3 sample grid.
++- `scripts/render_carry_mechanics.py`: action-by-action pickup/carry/drop grid.
++- `scripts/render_scripted_episode.py`: complete successful T02 storyboard and
++  machine-readable action manifest.
++
++## Usage
++
++Copy the module and scripts into a checkout of XLand-MiniGrid at commit
++`0d306d1`, then apply `register_five_object_env.patch`.
++
++```python
++import jax
++
++from xminigrid.envs.five_object_crafting import make_env_and_params
++
++env, params, task = make_env_and_params(task_id=2)
++timestep = env.reset(params, jax.random.PRNGKey(0))
++rgb = env.render(params, timestep)
++```
+diff --git a/home/user8_3/xland/xland-minigrid-five-object/RL_TRAINING.md b/home/user8_3/xland/xland-minigrid-five-object/RL_TRAINING.md
+new file mode 100644
+index 0000000..d534101
+--- /dev/null
++++ b/home/user8_3/xland/xland-minigrid-five-object/RL_TRAINING.md
+@@ -0,0 +1,177 @@
++# Privileged PPO training and active runs
++
++Last updated: 2026-07-30 10:29 Europe/Moscow.
++
++This is the hand-off document for AI agents working on RL trajectory
++collection. The authoritative server checkout is:
++
++```text
++/home/User9/xland-minigrid-five-object
++```
++
++The conda environment is `xland-five-object`. The training entry point is:
++
++```text
++/home/User9/xland-minigrid-five-object/training/train_privileged_crafting_ppo.py
++```
++
++## Why this policy should learn quickly
++
++The algorithm is PPO with a deliberately privileged Markov observation:
++
++- complete fixed-orientation 8×8 symbolic map;
++- agent direction and visible carried-object tile/color;
++- active ground-truth goal and rule encodings;
++- one-hot ground-truth crafting phase;
++- ground-truth valid-action mask;
++- potential-based dense credit for `ingredients → hexagon → blue key → open
++  door`;
++- native task success with a larger reward scale.
++
++The actor never receives the correct next action. It must still learn
++navigation, pickup/drop ordering, rule composition, door opening, and reaching
++the star. The extra inputs are allowed because these policies are data
++collectors, not the world/action model being evaluated.
++
++The network is an MLP over embedded symbolic tokens. Do not change it back to a
++cuDNN convolution without first fixing the server's CUDA/cuDNN compatibility:
++V100 convolution autotuning currently fails with cuDNN status 5003.
++
++## Success-rate semantics
++
++`train_success_rate` is in-distribution SR over the training task bank.
++`val_success_rate` is held-out compositional/color-binding SR:
++
++- ExactCraft Easy: six train trees, three held-out validation trees;
++- ShapeCraft Easy: 324 train shape/color tasks, 324 complementary validation
++  tasks;
++- Stride2-Adaptive Easy: the same six/three ExactCraft split under different
++  locomotion.
++
++SR counts an episode as successful only if the native
++`AgentNearGoal(yellow star)` terminates it. Dense shaping is used for PPO
++optimization but is not counted as success.
++
++`train_success_rate` and `val_success_rate` use deterministic `argmax`
++actions. `train/rollout_success_rate` uses the stochastic categorical policy
++that generates PPO experience. Both use the same native success flag, but they
++answer different questions. Threshold checkpoint names (`train_sr_20`, etc.)
++refer to the stricter deterministic train SR.
++
++## Active runs
++
++All runs started on 2026-07-30 and have a four-hour wall-clock budget after
++JAX compilation, capped at 200M environment transitions.
++
++| tmux session | Physical GPU | Environment | Seed | Run directory |
++|---|---:|---|---:|---|
++| `xland_rl_exact_easy` | 0 | `XLand-MiniGrid-ExactCraft-Easy-8x8-v1` | 41 | `runs/privileged_rl_easy_20260730/exact_easy` |
++| `xland_rl_shape_easy` | 1 | `XLand-MiniGrid-ShapeCraft-Easy-8x8-v1` | 42 | `runs/privileged_rl_easy_20260730/shape_easy` |
++| `xland_rl_stride2_easy` | 2 | `XLand-MiniGrid-EmbodiedExactCraft-Stride2-Adaptive-Easy-8x8-v1` | 43 | `runs/privileged_rl_easy_20260730/stride2_easy` |
++
++The active process log in each directory is `run_active.log`. Earlier
++`run.log` and `run_retry.log` files are preserved diagnostics from the
++discarded cuDNN attempts; they contain no training progress or checkpoints.
++
++GPU 3 is intentionally unused. It reports two volatile uncorrectable ECC
++errors and fails JAX with `CUDA_ERROR_ECC_UNCORRECTABLE`. This requires a
++sysadmin GPU reset or hardware remediation, not a training-code change.
++
++### Verified live metrics
++
++Snapshot at 2026-07-30 10:29 Europe/Moscow:
++
++| Run | Steps | Stochastic rollout SR | Deterministic train SR | Deterministic val SR | Throughput |
++|---|---:|---:|---:|---:|---:|
++| ExactCraft Easy | 55.57M | 99.6% | 92.2% | 71.4% | 149k steps/s |
++| ShapeCraft Easy | 54.53M | 99.4% | 87.0% | 68.8% | 150k steps/s |
++| Stride2-Adaptive Easy | 53.48M | 99.4% | 92.7% | 74.5% | 150k steps/s |
++
++All three tmux sessions were alive and physical GPUs 0/1/2 were at 100%
++utilization at this snapshot. All three runs had saved deterministic
++`train_sr_05`, `train_sr_20`, `train_sr_50`, and `train_sr_80` checkpoints;
++ExactCraft had also saved `train_sr_95`. Training was still active.
++
++## TensorBoard
++
++TensorBoard runs in tmux session `xland_rl_tb`:
++
++```text
++http://SERVER_HOST:6007/
++```
++
++Log root:
++
++```text
++/home/User9/xland-minigrid-five-object/runs/privileged_rl_easy_20260730
++```
++
++If port 6007 is not externally exposed, use an SSH tunnel:
++
++```bash
++ssh -L 6007:localhost:6007 User9@SERVER_HOST
++```
++
++Then open `http://localhost:6007/`.
++
++## Checkpoints and metrics
++
++Each run contains:
++
++```text
++config.json
++tensorboard/events.out.tfevents.*
++checkpoints/latest/
++checkpoints/best_val/
++checkpoints/train_sr_05/
++checkpoints/train_sr_20/
++checkpoints/train_sr_50/
++checkpoints/train_sr_80/
++checkpoints/train_sr_95/
++checkpoints/final/
++finished.json
++```
++
++Threshold directories appear when their train SR is first crossed. Every
++checkpoint directory contains `train_state.msgpack` and `metadata.json`.
++`train_state.msgpack` includes policy parameters, value parameters, optimizer
++state, and optimizer step, so it can be used both for inference and exact
++training continuation.
++
++Important TensorBoard scalars:
++
++- `eval/train_success_rate`;
++- `eval/val_success_rate`;
++- `train/rollout_success_rate`;
++- `train/loss`, `train/actor_loss`, `train/value_loss`,
++  `train/entropy`;
++- `system/steps_per_second`, `system/elapsed_hours`.
++
++Evaluation occurs every four training blocks, approximately every 1.05M
++transitions with the current configuration.
++
++## Monitoring
++
++```bash
++tmux ls
++tail -f runs/privileged_rl_easy_20260730/exact_easy/run_active.log
++tail -f runs/privileged_rl_easy_20260730/shape_easy/run_active.log
++tail -f runs/privileged_rl_easy_20260730/stride2_easy/run_active.log
++nvidia-smi
++```
++
++Do not treat the device string `cuda:0` inside every log as a mapping error.
++Each process has a different `CUDA_VISIBLE_DEVICES`, so its assigned physical
++GPU is remapped to local device zero.
++
++## Resume
++
++Use the same environment, run directory, and GPU assignment, adding:
++
++```text
++--resume RUN_DIR/checkpoints/latest/train_state.msgpack
++```
++
++For a new experiment, use a new run directory so existing TensorBoard events
++and checkpoints are not overwritten. A SIGTERM/SIGINT requests a graceful
++final checkpoint at the next completed training block.
+diff --git a/home/user8_3/xland/xland-minigrid-five-object/scripts/check_easy_levels.py b/home/user8_3/xland/xland-minigrid-five-object/scripts/check_easy_levels.py
+new file mode 100644
+index 0000000..45607bb
+--- /dev/null
++++ b/home/user8_3/xland/xland-minigrid-five-object/scripts/check_easy_levels.py
+@@ -0,0 +1,421 @@
++#!/usr/bin/env python3
++"""Checks for ExactCraft, ShapeCraft, and EmbodiedExactCraft Easy levels."""
++
++from __future__ import annotations
++
++import json
++
++import jax
++import jax.numpy as jnp
++import numpy as np
++
++import xminigrid
++from xminigrid.core.constants import TILES_REGISTRY, Colors, Tiles
++from xminigrid.core.grid import room
++from xminigrid.core.rules import check_rule
++from xminigrid.envs.easy_crafting import (
++    RULE_IDS as EXACT_EASY_RULE_IDS,
++    TASKS as EXACT_EASY_TASKS,
++    TRAIN_TASKS as EXACT_EASY_TRAIN_TASKS,
++    VAL_TASKS as EXACT_EASY_VAL_TASKS,
++    make_easy_env_and_params,
++)
++from xminigrid.envs.embodied_crafting import (
++    EMBODIMENTS,
++    make_embodied_env_and_params,
++)
++from xminigrid.envs.five_object_crafting import (
++    BLUE_KEY,
++    BLUE_LOCKED_DOOR,
++    D,
++    TASKS as EXACT_MEDIUM_TASKS,
++    YELLOW_STAR,
++)
++from xminigrid.envs.shape_crafting import (
++    TRAIN_TASKS as SHAPE_MEDIUM_TRAIN_TASKS,
++    VAL_TASKS as SHAPE_MEDIUM_VAL_TASKS,
++)
++from xminigrid.envs.shape_crafting_easy import (
++    ROLE_SHAPES,
++    RULE_IDS as SHAPE_EASY_RULE_IDS,
++    TRAIN_COLOR_INDEX_PALETTES,
++    TRAIN_TASKS as SHAPE_EASY_TRAIN_TASKS,
++    VAL_COLOR_INDEX_PALETTES,
++    VAL_TASKS as SHAPE_EASY_VAL_TASKS,
++    make_shape_easy_env_and_params,
++)
++from xminigrid.envs.shape_crafting import COLOR_IDS
++from xminigrid.types import AgentState
++
++
++EASY_REGISTRY_IDS = (
++    "XLand-MiniGrid-ExactCraft-Easy-8x8-v1",
++    "XLand-MiniGrid-ShapeCraft-Easy-8x8-v1",
++    "XLand-MiniGrid-EmbodiedExactCraft-Standard-Easy-8x8-v1",
++    "XLand-MiniGrid-EmbodiedExactCraft-Stride2-Easy-8x8-v1",
++    "XLand-MiniGrid-EmbodiedExactCraft-Omni8-Easy-8x8-v1",
++    "XLand-MiniGrid-EmbodiedExactCraft-Crab-Easy-8x8-v1",
++)
++MEDIUM_REGISTRY_IDS = (
++    "XLand-MiniGrid-ExactCraft-Medium-8x8-v1",
++    "XLand-MiniGrid-ShapeCraft-Medium-8x8-v1",
++    "XLand-MiniGrid-EmbodiedExactCraft-Standard-Medium-8x8-v1",
++    "XLand-MiniGrid-EmbodiedExactCraft-Stride2-Medium-8x8-v1",
++    "XLand-MiniGrid-EmbodiedExactCraft-Omni8-Medium-8x8-v1",
++    "XLand-MiniGrid-EmbodiedExactCraft-Crab-Medium-8x8-v1",
++)
++LEGACY_IDS = (
++    "XLand-MiniGrid-FiveObjectCrafting-8x8",
++    "XLand-MiniGrid-ExactCraft-8x8-v1",
++    "XLand-MiniGrid-ShapeCraft-8x8-v1",
++    "XLand-MiniGrid-EmbodiedExactCraft-Standard-8x8-v1",
++    "XLand-MiniGrid-EmbodiedExactCraft-Stride2-8x8-v1",
++    "XLand-MiniGrid-EmbodiedExactCraft-Omni8-8x8-v1",
++    "XLand-MiniGrid-EmbodiedExactCraft-Crab-8x8-v1",
++)
++
++
++def count_exact_tiles(grid: np.ndarray, tile) -> int:
++    return int(np.all(grid == np.asarray(tile), axis=-1).sum())
++
++
++def check_exact_easy_split_and_chains() -> None:
++    assert len(EXACT_EASY_TASKS) == 9
++    assert len(EXACT_EASY_TRAIN_TASKS) == 6
++    assert len(EXACT_EASY_VAL_TASKS) == 3
++    train_rules = {
++        rule
++        for task in EXACT_EASY_TRAIN_TASKS
++        for rule in task.rule_ids
++    }
++    val_rules = {
++        rule
++        for task in EXACT_EASY_VAL_TASKS
++        for rule in task.rule_ids
++    }
++    assert train_rules == val_rules == set(EXACT_EASY_RULE_IDS)
++
++    for task in EXACT_EASY_TASKS:
++        assert task.split == (
++            "val" if task.stage1_idx == task.stage2_idx else "train"
++        )
++        assert task.ruleset.rules.shape == (2, 7)
++        assert task.ruleset.init_tiles.shape == (3, 2)
++        assert np.all(np.asarray(task.ruleset.rules)[:, 0] == 3)
++
++        grid = room(7, 7)
++        agent = AgentState(
++            position=jnp.asarray((4, 4)),
++            direction=jnp.asarray(0),
++        )
++        position = jnp.asarray((3, 2))
++        initial = np.asarray(task.ruleset.init_tiles)
++        grid = grid.at[3, 2].set(initial[0])
++        grid = grid.at[3, 3].set(initial[1])
++        grid, agent = check_rule(
++            task.ruleset.rules,
++            grid,
++            agent,
++            jnp.asarray(4),
++            position,
++        )
++        assert np.array_equal(np.asarray(grid[3, 3]), np.asarray(D))
++
++        grid = grid.at[3, 2].set(initial[2])
++        grid, agent = check_rule(
++            task.ruleset.rules,
++            grid,
++            agent,
++            jnp.asarray(4),
++            position,
++        )
++        assert np.array_equal(np.asarray(grid[3, 3]), np.asarray(BLUE_KEY))
++
++
++def check_exact_easy_resets() -> None:
++    for task in EXACT_EASY_TASKS:
++        env, params, _ = make_easy_env_and_params(task.task_id)
++        assert params.max_steps == 192
++        for seed in (0, 17):
++            timestep = env.reset(params, jax.random.PRNGKey(seed))
++            grid = np.asarray(timestep.state.grid)
++            assert grid.shape == (8, 8, 2)
++            assert timestep.observation["img"].shape == (8, 8, 3)
++            assert count_exact_tiles(grid, BLUE_LOCKED_DOOR) == 1
++            assert count_exact_tiles(grid, YELLOW_STAR) == 1
++            assert count_exact_tiles(grid, BLUE_KEY) == 0
++            assert count_exact_tiles(grid, D) == 0
++            assert int(
++                np.isin(
++                    grid[..., 0],
++                    (Tiles.BALL, Tiles.SQUARE, Tiles.PYRAMID),
++                ).sum()
++            ) == 3
++
++    env, params, _ = make_easy_env_and_params(2)
++    timestep = jax.jit(env.reset)(params, jax.random.PRNGKey(123))
++    timestep = jax.jit(env.step)(params, timestep, jnp.asarray(1))
++    assert int(timestep.state.step_num) == 1
++    assert env.render(params, timestep).shape == (256, 256, 3)
++
++
++def check_shape_easy_split_and_dynamics() -> None:
++    assert len(TRAIN_COLOR_INDEX_PALETTES) == 36
++    assert len(VAL_COLOR_INDEX_PALETTES) == 36
++    assert len(SHAPE_EASY_TRAIN_TASKS) == 324
++    assert len(SHAPE_EASY_VAL_TASKS) == 324
++
++    train_trees = {
++        (task.stage1_idx, task.stage2_idx)
++        for task in SHAPE_EASY_TRAIN_TASKS
++    }
++    val_trees = {
++        (task.stage1_idx, task.stage2_idx)
++        for task in SHAPE_EASY_VAL_TASKS
++    }
++    assert train_trees == val_trees
++    assert len(train_trees) == 9
++    assert {
++        rule
++        for task in SHAPE_EASY_TRAIN_TASKS
++        for rule in task.rule_ids
++    } == set(SHAPE_EASY_RULE_IDS)
++    assert {
++        rule
++        for task in SHAPE_EASY_VAL_TASKS
++        for rule in task.rule_ids
++    } == set(SHAPE_EASY_RULE_IDS)
++
++    global_train_colors = set()
++    global_val_colors = set()
++    for role_index in range(4):
++        train_colors = {
++            task.palette_color_ids[role_index]
++            for task in SHAPE_EASY_TRAIN_TASKS
++        }
++        val_colors = {
++            task.palette_color_ids[role_index]
++            for task in SHAPE_EASY_VAL_TASKS
++        }
++        assert len(train_colors) == len(val_colors) == 3
++        assert train_colors.isdisjoint(val_colors)
++        global_train_colors.update(train_colors)
++        global_val_colors.update(val_colors)
++    assert global_train_colors == global_val_colors == set(COLOR_IDS)
++    assert all(
++        len(set(task.palette_color_ids)) == 4
++        for task in SHAPE_EASY_TRAIN_TASKS + SHAPE_EASY_VAL_TASKS
++    )
++
++    train_shape_colors = {
++        (ROLE_SHAPES[index], task.palette_color_ids[index])
++        for task in SHAPE_EASY_TRAIN_TASKS
++        for index in range(4)
++    }
++    val_shape_colors = {
++        (ROLE_SHAPES[index], task.palette_color_ids[index])
++        for task in SHAPE_EASY_VAL_TASKS
++        for index in range(4)
++    }
++    assert train_shape_colors.isdisjoint(val_shape_colors)
++
++    for task in (
++        SHAPE_EASY_TRAIN_TASKS[0],
++        SHAPE_EASY_TRAIN_TASKS[-1],
++        SHAPE_EASY_VAL_TASKS[0],
++        SHAPE_EASY_VAL_TASKS[-1],
++    ):
++        assert task.ruleset.rules.shape == (2, 7)
++        assert task.ruleset.init_tiles.shape == (3, 2)
++        assert np.all(np.asarray(task.ruleset.rules)[:, 0] == 12)
++        grid = room(7, 7)
++        agent = AgentState(
++            position=jnp.asarray((4, 4)),
++            direction=jnp.asarray(0),
++        )
++        position = jnp.asarray((3, 2))
++        stage1_shapes = (
++            (Tiles.BALL, Tiles.SQUARE),
++            (Tiles.BALL, Tiles.PYRAMID),
++            (Tiles.SQUARE, Tiles.PYRAMID),
++        )[task.stage1_idx]
++        grid = grid.at[3, 2].set(
++            TILES_REGISTRY[stage1_shapes[0], Colors.BROWN]
++        )
++        grid = grid.at[3, 3].set(
++            TILES_REGISTRY[stage1_shapes[1], Colors.YELLOW]
++        )
++        grid, agent = check_rule(
++            task.ruleset.rules,
++            grid,
++            agent,
++            jnp.asarray(4),
++            position,
++        )
++        assert np.array_equal(
++            np.asarray(grid[3, 3]),
++            np.asarray(task.role_tiles[3]),
++        )
++
++        catalyst_shape = (
++            Tiles.BALL,
++            Tiles.SQUARE,
++            Tiles.PYRAMID,
++        )[task.stage2_idx]
++        grid = grid.at[3, 2].set(
++            TILES_REGISTRY[catalyst_shape, Colors.BROWN]
++        )
++        grid, agent = check_rule(
++            task.ruleset.rules,
++            grid,
++            agent,
++            jnp.asarray(4),
++            position,
++        )
++        assert np.array_equal(np.asarray(grid[3, 3]), np.asarray(BLUE_KEY))
++
++
++def check_shape_easy_resets() -> None:
++    for split in ("train", "val"):
++        for task_index in (1, 162, 324):
++            env, params, _ = make_shape_easy_env_and_params(split, task_index)
++            assert params.max_steps == 192
++            timestep = env.reset(params, jax.random.PRNGKey(task_index))
++            grid = np.asarray(timestep.state.grid)
++            assert timestep.observation["img"].shape == (8, 8, 3)
++            assert count_exact_tiles(grid, BLUE_LOCKED_DOOR) == 1
++            assert count_exact_tiles(grid, YELLOW_STAR) == 1
++            assert count_exact_tiles(grid, BLUE_KEY) == 0
++            assert int((grid[..., 0] == Tiles.HEX).sum()) == 0
++            assert int(
++                np.isin(
++                    grid[..., 0],
++                    (Tiles.BALL, Tiles.SQUARE, Tiles.PYRAMID),
++                ).sum()
++            ) == 3
++
++    env, params, _ = make_shape_easy_env_and_params("train", 1)
++    timestep = jax.jit(env.reset)(params, jax.random.PRNGKey(3))
++    timestep = jax.jit(env.step)(params, timestep, jnp.asarray(1))
++    assert env.render(params, timestep).shape == (256, 256, 3)
++
++
++def check_embodied_easy() -> None:
++    for task_id in (1, 5, 9):
++        for seed in (0, 19):
++            snapshots = []
++            for embodiment in EMBODIMENTS:
++                env, params, task = make_embodied_env_and_params(
++                    embodiment,
++                    task_id,
++                    difficulty="easy",
++                )
++                assert params.max_steps == 192
++                assert "EASY" in params.grid_type
++                timestep = env.reset(params, jax.random.PRNGKey(seed))
++                snapshots.append(
++                    (
++                        np.asarray(timestep.state.grid),
++                        np.asarray(timestep.state.agent.position),
++                        np.asarray(timestep.state.rule_encoding),
++                        task.split,
++                    )
++                )
++            for snapshot in snapshots[1:]:
++                assert np.array_equal(snapshot[0], snapshots[0][0])
++                assert np.array_equal(snapshot[1], snapshots[0][1])
++                assert np.array_equal(snapshot[2], snapshots[0][2])
++                assert snapshot[3] == snapshots[0][3]
++
++    for embodiment in EMBODIMENTS:
++        easy_env, easy_params, _ = make_embodied_env_and_params(
++            embodiment,
++            2,
++            difficulty="easy",
++        )
++        easy_timestep = jax.jit(easy_env.reset)(
++            easy_params,
++            jax.random.PRNGKey(4),
++        )
++        easy_timestep = jax.jit(easy_env.step)(
++            easy_params,
++            easy_timestep,
++            jnp.asarray(1),
++        )
++        assert easy_env.render(easy_params, easy_timestep).shape == (256, 256, 3)
++
++        _, medium_params, medium_task = make_embodied_env_and_params(
++            embodiment,
++            27,
++        )
++        assert medium_params.max_steps == 256
++        assert "MEDIUM" in medium_params.grid_type
++        assert medium_task.task_id == 27
++
++
++def check_registry_and_medium_unchanged() -> None:
++    registry = set(xminigrid.registered_environments())
++    for registry_id in EASY_REGISTRY_IDS + MEDIUM_REGISTRY_IDS + LEGACY_IDS:
++        assert registry_id in registry
++
++    assert len(EXACT_MEDIUM_TASKS) == 27
++    assert len(SHAPE_MEDIUM_TRAIN_TASKS) == 972
++    assert len(SHAPE_MEDIUM_VAL_TASKS) == 972
++
++    exact_task = EXACT_EASY_TASKS[0]
++    env, params = xminigrid.make(
++        "XLand-MiniGrid-ExactCraft-Easy-8x8-v1",
++        ruleset=exact_task.ruleset,
++    )
++    timestep = env.reset(params, jax.random.PRNGKey(0))
++    assert timestep.observation["img"].shape == (8, 8, 3)
++    assert params.max_steps == 192
++
++    shape_task = SHAPE_EASY_TRAIN_TASKS[0]
++    env, params = xminigrid.make(
++        "XLand-MiniGrid-ShapeCraft-Easy-8x8-v1",
++        ruleset=shape_task.ruleset,
++    )
++    timestep = env.reset(params, jax.random.PRNGKey(0))
++    assert timestep.observation["img"].shape == (8, 8, 3)
++
++
++def main() -> None:
++    check_exact_easy_split_and_chains()
++    check_exact_easy_resets()
++    check_shape_easy_split_and_dynamics()
++    check_shape_easy_resets()
++    check_embodied_easy()
++    check_registry_and_medium_unchanged()
++    print(
++        json.dumps(
++            {
++                "status": "ok",
++                "exact_easy": {
++                    "rules": 6,
++                    "trees": 9,
++                    "train": 6,
++                    "val": 3,
++                    "initial_objects": 3,
++                    "active_rules": 2,
++                },
++                "shape_easy": {
++                    "rules": 6,
++                    "trees_per_split": 9,
++                    "palettes_per_split": 36,
++                    "train_tasks": 324,
++                    "val_tasks": 324,
++                    "shape_color_overlap": 0,
++                },
++                "embodied_easy": list(EMBODIMENTS),
++                "canonical_medium_ids": len(MEDIUM_REGISTRY_IDS),
++                "legacy_ids_preserved": len(LEGACY_IDS),
++                "jit_and_rendering": True,
++            },
++            indent=2,
++        )
++    )
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/home/user8_3/xland/xland-minigrid-five-object/scripts/check_five_object_crafting.py b/home/user8_3/xland/xland-minigrid-five-object/scripts/check_five_object_crafting.py
+new file mode 100755
+index 0000000..73f3f25
+--- /dev/null
++++ b/home/user8_3/xland/xland-minigrid-five-object/scripts/check_five_object_crafting.py
+@@ -0,0 +1,303 @@
++#!/usr/bin/env python3
++"""Smoke and invariant checks for the five-object crafting task family."""
++
++from __future__ import annotations
++
++import json
++
++import jax
++import jax.numpy as jnp
++import numpy as np
++
++from xminigrid.core.actions import take_action
++from xminigrid.core.constants import TILES_REGISTRY, Colors, Tiles
++from xminigrid.core.grid import room, vertical_line
++from xminigrid.core.rules import check_rule
++from xminigrid.types import AgentState
++from xminigrid.envs.five_object_crafting import (
++    BLUE_KEY,
++    BLUE_LOCKED_DOOR,
++    B,
++    C,
++    D,
++    E,
++    RULE_IDS,
++    TASKS,
++    TRAIN_TASKS,
++    VAL_TASKS,
++    YELLOW_STAR,
++    make_env_and_params,
++)
++
++
++def count_exact_tiles(grid: np.ndarray, tile: jax.Array) -> int:
++    return int(np.all(grid == np.asarray(tile), axis=-1).sum())
++
++
++def check_split() -> None:
++    assert len(TASKS) == 27
++    assert len(TRAIN_TASKS) == 18
++    assert len(VAL_TASKS) == 9
++    train_rules = {rule for task in TRAIN_TASKS for rule in task.rule_ids}
++    val_rules = {rule for task in VAL_TASKS for rule in task.rule_ids}
++    assert train_rules == val_rules == set(RULE_IDS)
++
++
++def check_resets() -> None:
++    saw_agent_left = False
++    saw_agent_right = False
++    for task in TASKS:
++        for seed in (0, 1, 17):
++            env, params, _ = make_env_and_params(task.task_id)
++            timestep = env.reset(params, jax.random.PRNGKey(seed))
++            grid = np.asarray(timestep.state.grid)
++            agent_y, agent_x = map(int, timestep.state.agent.position)
++
++            assert count_exact_tiles(grid, BLUE_LOCKED_DOOR) == 1
++            assert count_exact_tiles(grid, YELLOW_STAR) == 1
++            assert count_exact_tiles(grid, BLUE_KEY) == 0
++            assert count_exact_tiles(grid, D) == 0
++            assert count_exact_tiles(grid, E) == 0
++            assert np.all(np.asarray(timestep.state.rule_encoding)[:, 0] == 3)
++
++            star_y, star_x = np.argwhere(
++                np.all(grid == np.asarray(YELLOW_STAR), axis=-1)
++            )[0]
++            assert (params.height, params.width) == (8, 8)
++            _, divider_x = np.argwhere(
++                np.all(grid == np.asarray(BLUE_LOCKED_DOOR), axis=-1)
++            )[0]
++            if agent_x < divider_x:
++                saw_agent_left = True
++                assert divider_x == 4
++                assert star_x > divider_x
++                agent_room_columns = divider_x - 1
++                goal_room_columns = params.width - divider_x - 2
++            else:
++                saw_agent_right = True
++                assert divider_x == 3
++                assert star_x < divider_x
++                agent_room_columns = params.width - divider_x - 2
++                goal_room_columns = divider_x - 1
++            assert agent_room_columns == 3
++            assert goal_room_columns == 2
++            assert 0 < agent_y < params.height - 1
++            assert 0 < star_y < params.height - 1
++
++            observation = timestep.observation
++            assert observation["img"].shape == (8, 8, 3)
++            assert observation["pocket"].shape == (2,)
++            agent_layer = np.asarray(observation["img"][..., 2])
++            assert np.count_nonzero(agent_layer) == 1
++            assert int(agent_layer[agent_y, agent_x]) == int(
++                timestep.state.agent.direction
++            ) + 1
++            assert np.array_equal(
++                np.asarray(observation["img"][..., :2]),
++                grid,
++            )
++
++    assert saw_agent_left and saw_agent_right
++
++    env, params, _ = make_env_and_params(2)
++    reset_jit = jax.jit(env.reset)
++    step_jit = jax.jit(env.step)
++    timestep = reset_jit(params, jax.random.PRNGKey(123))
++    timestep = step_jit(params, timestep, jnp.asarray(1))
++    assert int(timestep.state.step_num) == 1
++
++    # Changing the agent direction changes only the agent's own rendered tile,
++    # proving that the map itself is not camera-rotated or FOV-shaded.
++    render_a = env.render(params, timestep)
++    rotated_agent = timestep.state.agent.replace(
++        direction=(timestep.state.agent.direction + 1) % 4
++    )
++    rotated_timestep = timestep.replace(
++        state=timestep.state.replace(agent=rotated_agent)
++    )
++    render_b = env.render(params, rotated_timestep)
++    agent_y, agent_x = map(int, timestep.state.agent.position)
++    tile_size = render_a.shape[0] // params.height
++    outside_agent = np.ones(render_a.shape[:2], dtype=np.bool_)
++    outside_agent[
++        agent_y * tile_size : (agent_y + 1) * tile_size,
++        agent_x * tile_size : (agent_x + 1) * tile_size,
++    ] = False
++    assert np.array_equal(render_a[outside_agent], render_b[outside_agent])
++    assert render_a.shape == (256, 256, 3)
++
++
++def check_crafting_chains() -> None:
++    for task in TASKS:
++        grid = room(7, 7)
++        agent = AgentState(position=jnp.asarray((4, 4)), direction=jnp.asarray(0))
++        position = jnp.asarray((3, 2))
++
++        # Stage 1: base pair -> D.
++        stage1_inputs = np.asarray(task.ruleset.init_tiles[:2])
++        grid = grid.at[3, 2].set(stage1_inputs[0])
++        grid = grid.at[3, 3].set(stage1_inputs[1])
++        grid, agent = check_rule(task.ruleset.rules, grid, agent, 4, position)
++        assert np.array_equal(np.asarray(grid[3, 3]), np.asarray(D))
++
++        # Stage 2: D + selected catalyst -> E.
++        grid = grid.at[3, 2].set(task.ruleset.init_tiles[2])
++        grid, agent = check_rule(task.ruleset.rules, grid, agent, 4, position)
++        assert np.array_equal(np.asarray(grid[3, 3]), np.asarray(E))
++
++        # Stage 3: E + selected catalyst -> blue key.
++        grid = grid.at[3, 2].set(task.ruleset.init_tiles[3])
++        grid, agent = check_rule(task.ruleset.rules, grid, agent, 4, position)
++        assert np.array_equal(np.asarray(grid[3, 3]), np.asarray(BLUE_KEY))
++
++
++def check_blue_key_opens_only_blue_locked_door() -> None:
++    grid = room(5, 5).at[2, 2].set(BLUE_LOCKED_DOOR)
++    blue_key_agent = AgentState(
++        position=jnp.asarray((2, 1)),
++        direction=jnp.asarray(1),
++        pocket=BLUE_KEY,
++    )
++    opened_grid, _, _ = take_action(grid, blue_key_agent, 5)
++    assert int(opened_grid[2, 2, 0]) == Tiles.DOOR_OPEN
++    assert int(opened_grid[2, 2, 1]) == Colors.BLUE
++
++    red_key_agent = blue_key_agent.replace(
++        pocket=TILES_REGISTRY[Tiles.KEY, Colors.RED]
++    )
++    still_locked_grid, _, _ = take_action(grid, red_key_agent, 5)
++    assert np.array_equal(
++        np.asarray(still_locked_grid[2, 2]),
++        np.asarray(BLUE_LOCKED_DOOR),
++    )
++
++
++def check_visible_carry_mechanics() -> None:
++    env, params, _ = make_env_and_params(2)
++    timestep = env.reset(params, jax.random.PRNGKey(0))
++
++    wall = TILES_REGISTRY[Tiles.WALL, Colors.GREY]
++    floor = TILES_REGISTRY[Tiles.FLOOR, Colors.BLACK]
++    empty = TILES_REGISTRY[Tiles.EMPTY, Colors.EMPTY]
++    grid = room(8, 8)
++    grid = vertical_line(grid, 4, 0, 8, wall)
++    grid = grid.at[2, 4].set(BLUE_LOCKED_DOOR)
++    grid = grid.at[3, 6].set(YELLOW_STAR)
++    grid = grid.at[3, 2].set(C)
++    grid = grid.at[5, 3].set(B)
++    agent = AgentState(
++        position=jnp.asarray((4, 2)),
++        direction=jnp.asarray(0),
++        pocket=empty,
++    )
++    timestep = timestep.replace(
++        state=timestep.state.replace(grid=grid, agent=agent)
++    )
++    timestep = timestep.replace(observation=env._full_map_observation(timestep))
++
++    # Pick up C directly in front: it leaves the grid but remains explicit in
++    # both the symbolic pocket observation and the RGB frame.
++    picked = env.step(params, timestep, jnp.asarray(3))
++    assert np.array_equal(np.asarray(picked.state.agent.pocket), np.asarray(C))
++    assert np.array_equal(np.asarray(picked.observation["pocket"]), np.asarray(C))
++    assert np.array_equal(np.asarray(picked.state.grid[3, 2]), np.asarray(floor))
++
++    carried_render = env.render(params, picked)
++    hidden_agent = picked.state.agent.replace(pocket=empty)
++    hidden_timestep = picked.replace(
++        state=picked.state.replace(agent=hidden_agent)
++    )
++    hidden_render = env.render(params, hidden_timestep)
++    agent_y, agent_x = map(int, picked.state.agent.position)
++    tile_size = carried_render.shape[0] // params.height
++    outside_agent = np.ones(carried_render.shape[:2], dtype=np.bool_)
++    outside_agent[
++        agent_y * tile_size : (agent_y + 1) * tile_size,
++        agent_x * tile_size : (agent_x + 1) * tile_size,
++    ] = False
++    assert np.array_equal(
++        carried_render[outside_agent],
++        hidden_render[outside_agent],
++    )
++    assert not np.array_equal(
++        carried_render[~outside_agent],
++        hidden_render[~outside_agent],
++    )
++
++    # The white C pyramid follows the triangle tip when direction changes.
++    agent_tile_up = carried_render[
++        agent_y * tile_size : (agent_y + 1) * tile_size,
++        agent_x * tile_size : (agent_x + 1) * tile_size,
++    ]
++    white_up = np.all(agent_tile_up > 220, axis=-1)
++    assert np.where(white_up)[0].mean() < tile_size / 2
++
++    turned = env.step(params, picked, jnp.asarray(1))
++    turned_render = env.render(params, turned)
++    agent_tile_right = turned_render[
++        agent_y * tile_size : (agent_y + 1) * tile_size,
++        agent_x * tile_size : (agent_x + 1) * tile_size,
++    ]
++    white_right = np.all(agent_tile_right > 220, axis=-1)
++    assert np.where(white_right)[1].mean() > tile_size / 2
++
++    # Move once, then verify the wall blocks the agent while carrying.
++    moved = env.step(params, turned, jnp.asarray(0))
++    assert tuple(map(int, moved.state.agent.position)) == (4, 3)
++    blocked = env.step(params, moved, jnp.asarray(0))
++    assert tuple(map(int, blocked.state.agent.position)) == (4, 3)
++    assert np.array_equal(np.asarray(blocked.state.agent.pocket), np.asarray(C))
++
++    # Facing occupied B: put_down must fail and C remains attached.
++    facing_b = env.step(params, blocked, jnp.asarray(1))
++    invalid_drop = env.step(params, facing_b, jnp.asarray(4))
++    assert np.array_equal(
++        np.asarray(invalid_drop.state.agent.pocket),
++        np.asarray(C),
++    )
++    assert np.array_equal(np.asarray(invalid_drop.state.grid[5, 3]), np.asarray(B))
++
++    # Turn toward a free adjacent floor tile and put C down successfully.
++    facing_floor = env.step(params, invalid_drop, jnp.asarray(1))
++    valid_drop = env.step(params, facing_floor, jnp.asarray(4))
++    assert int(valid_drop.state.agent.pocket[0]) == Tiles.EMPTY
++    assert np.array_equal(np.asarray(valid_drop.state.grid[4, 2]), np.asarray(C))
++
++
++def main() -> None:
++    check_split()
++    check_resets()
++    check_crafting_chains()
++    check_blue_key_opens_only_blue_locked_door()
++    check_visible_carry_mechanics()
++    print(
++        json.dumps(
++            {
++                "status": "ok",
++                "tasks": len(TASKS),
++                "train": len(TRAIN_TASKS),
++                "val": len(VAL_TASKS),
++                "primitive_rules_in_both_splits": list(RULE_IDS),
++                "reset_seeds_checked_per_task": 3,
++                "crafting_chains_checked": len(TASKS),
++                "jit_reset_and_step": True,
++                "map_shape": [8, 8],
++                "observation_shape": {"img": [8, 8, 3], "pocket": [2]},
++                "layout_mirroring": "random",
++                "agent_room": "always_larger_3_columns",
++                "goal_room": "always_smaller_2_columns",
++                "static_full_map_render": True,
++                "visible_attached_pocket_render": True,
++                "carried_object_rotates_with_agent": True,
++                "carrying_wall_collision": True,
++                "occupied_drop_rejected": True,
++                "free_adjacent_drop_succeeds": True,
++                "blue_door_lock_check": True,
++            },
++            indent=2,
++        )
++    )
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/home/user8_3/xland/xland-minigrid-five-object/scripts/collect_ppo_trajectories.py b/home/user8_3/xland/xland-minigrid-five-object/scripts/collect_ppo_trajectories.py
+new file mode 100644
+index 0000000..8658dd1
+--- /dev/null
++++ b/home/user8_3/xland/xland-minigrid-five-object/scripts/collect_ppo_trajectories.py
+@@ -0,0 +1,142 @@
++#!/usr/bin/env python3
++"""Collect successful symbolic XLand trajectories from an existing PPO checkpoint."""
++from __future__ import annotations
++import argparse
++import json
++import sys
++import types
++from pathlib import Path
++
++# The training module imports tensorboardX only for training-time logging.
++# Trajectory inference does not use it, so provide a no-op substitute.
++class _NoOpSummaryWriter:
++    def __init__(self, *args, **kwargs): pass
++    def add_scalar(self, *args, **kwargs): pass
++    def close(self): pass
++_tensorboardx = types.ModuleType("tensorboardX")
++_tensorboardx.SummaryWriter = _NoOpSummaryWriter
++sys.modules.setdefault("tensorboardX", _tensorboardx)
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT))
++
++import jax
++import jax.numpy as jnp
++import numpy as np
++import optax
++from flax import serialization
++from flax.training.train_state import TrainState
++
++from training.train_privileged_crafting_ppo import (
++    Config, PrivilegedActorCritic, embodiment_spec, make_env, task_banks,
++)
++
++def restore(run_dir: Path, checkpoint: Path):
++    config = Config(**json.loads((run_dir / "config.json").read_text()))
++    benchmark, _ = task_banks(config.env_id)
++    env, base_params = make_env(config.env_id, autoreset=False)
++    _, direction_count = embodiment_spec(config.env_id)
++    network = PrivilegedActorCritic(
++        num_actions=env.num_actions(base_params),
++        agent_direction_classes=direction_count + 1,
++    )
++    key = jax.random.key(config.seed)
++    key, init_key, reset_key = jax.random.split(key, 3)
++    init_params = base_params.replace(ruleset=benchmark.get_ruleset(0))
++    init_timestep = env.reset(init_params, reset_key)
++    params = network.init(init_key, jax.tree.map(lambda x: x[None], init_timestep.observation))
++    schedule = optax.warmup_cosine_decay_schedule(
++        init_value=config.learning_rate * 0.1,
++        peak_value=config.learning_rate,
++        warmup_steps=100,
++        decay_steps=max(101, config.total_timesteps // config.transitions_per_update * config.update_epochs * config.num_minibatches),
++        end_value=config.learning_rate * 0.05,
++    )
++    tx = optax.chain(optax.clip_by_global_norm(config.max_grad_norm), optax.adam(schedule, eps=1e-5))
++    state = TrainState.create(apply_fn=network.apply, params=params, tx=tx)
++    state = serialization.from_bytes(state, (checkpoint / "train_state.msgpack").read_bytes())
++    return config, benchmark, env, base_params, network, state
++
++def make_rollout(env, base_params, network):
++    max_steps = int(base_params.max_steps)
++    def rollout(params, reset_keys, policy_params):
++        timestep = jax.vmap(env.reset)(params, reset_keys)
++        done = jnp.zeros((reset_keys.shape[0],), dtype=jnp.bool_)
++        success = jnp.zeros_like(done)
++        lengths = jnp.zeros((reset_keys.shape[0],), dtype=jnp.int32)
++        def one_step(carry, _):
++            timestep, done, success, lengths = carry
++            dist, _ = network.apply(policy_params, timestep.observation)
++            action = dist.mode()
++            def advance(param, ts, act, is_done):
++                return jax.lax.cond(is_done, lambda _: ts, lambda _: env.step(param, ts, act), operand=None)
++            next_timestep = jax.vmap(advance)(params, timestep, action, done)
++            active = ~done
++            terminal = active & next_timestep.last()
++            success = success | (terminal & (next_timestep.reward > 0.9))
++            lengths = lengths + active.astype(jnp.int32)
++            record = {
++                "obs": timestep.observation,
++                "next_obs": next_timestep.observation,
++                "action": action,
++                "reward": next_timestep.reward,
++                "active": active,
++            }
++            return (next_timestep, done | terminal, success, lengths), record
++        (_, _, success, lengths), records = jax.lax.scan(one_step, (timestep, done, success, lengths), None, length=max_steps)
++        return records, success, lengths
++    return jax.jit(rollout)
++
++def main():
++    p = argparse.ArgumentParser()
++    p.add_argument("--run-dir", type=Path, required=True)
++    p.add_argument("--checkpoint", type=Path, required=True)
++    p.add_argument("--output-dir", type=Path, required=True)
++    p.add_argument("--episodes", type=int, default=10_000)
++    p.add_argument("--batch-size", type=int, default=256)
++    p.add_argument("--seed", type=int, default=20260731)
++    a = p.parse_args()
++    a.output_dir.mkdir(parents=True, exist_ok=True)
++    config, benchmark, env, base_params, network, state = restore(a.run_dir, a.checkpoint)
++    rollout = make_rollout(env, base_params, network)
++    key = jax.random.key(a.seed)
++    accepted = attempts = 0
++    manifest = a.output_dir / "manifest.jsonl"
++    with manifest.open("w") as log:
++        while accepted < a.episodes:
++            key, task_key, reset_key = jax.random.split(key, 3)
++            task_keys = jax.random.split(task_key, a.batch_size)
++            reset_keys = jax.random.split(reset_key, a.batch_size)
++            rulesets = jax.vmap(benchmark.sample_ruleset)(task_keys)
++            params = base_params.replace(ruleset=rulesets)
++            records, successes, lengths = jax.device_get(rollout(params, reset_keys, state.params))
++            successes, lengths = np.asarray(successes), np.asarray(lengths)
++            attempts += a.batch_size
++            for i in np.flatnonzero(successes):
++                if accepted >= a.episodes:
++                    break
++                length = int(lengths[i])
++                payload = {
++                    "obs": np.asarray(records["obs"]["img"][:length, i], dtype=np.uint8),
++                    "next_obs": np.asarray(records["next_obs"]["img"][:length, i], dtype=np.uint8),
++                    "actions": np.asarray(records["action"][:length, i], dtype=np.int8),
++                    "rewards": np.asarray(records["reward"][:length, i], dtype=np.float32),
++                    "rule_encoding": np.asarray(records["obs"]["rule_encoding"][0, i], dtype=np.int16),
++                    "goal_encoding": np.asarray(records["obs"]["goal_encoding"][0, i], dtype=np.int16),
++                }
++                filename = f"episode_{accepted:05d}.npz"
++                np.savez_compressed(a.output_dir / filename, **payload)
++                log.write(json.dumps({"episode": accepted, "file": filename, "length": length}) + "\n")
++                accepted += 1
++            if accepted % 500 < a.batch_size:
++                print(json.dumps({"accepted_successes": accepted, "attempted_episodes": attempts}), flush=True)
++    summary = {
++        "episodes": accepted, "attempted_episodes": attempts, "success_rate_during_collection": accepted / attempts,
++        "source_run": str(a.run_dir), "checkpoint": str(a.checkpoint), "environment": config.env_id,
++        "policy": "deterministic PPO argmax", "format": "one compressed NPZ per successful episode; symbolic obs/next_obs/actions/rewards",
++    }
++    (a.output_dir / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
++    print(json.dumps(summary, indent=2), flush=True)
++
++if __name__ == "__main__":
++    main()
+diff --git a/home/user8_3/xland/xland-minigrid-five-object/scripts/generate_ood_different_task_tree_manifest.py b/home/user8_3/xland/xland-minigrid-five-object/scripts/generate_ood_different_task_tree_manifest.py
+new file mode 100644
+index 0000000..5df54a0
+--- /dev/null
++++ b/home/user8_3/xland/xland-minigrid-five-object/scripts/generate_ood_different_task_tree_manifest.py
+@@ -0,0 +1,45 @@
++#!/usr/bin/env python3
++"""Reserve a deterministic 1,000-episode OOD suite; no trajectories are generated."""
++from __future__ import annotations
++import json
++from pathlib import Path
++from xminigrid.envs.five_object_crafting import TASKS
++
++ROOT = Path(__file__).resolve().parents[1] / "artifacts" / "ood_different_task_trees_v1"
++SEED_START = 8_000_000
++EPISODES = 1000
++ENV_ID = "XLand-MiniGrid-ExactCraft-Medium-8x8-v1"
++
++def main():
++    heldout = [task for task in TASKS if task.split == "val"]
++    if not heldout:
++        raise RuntimeError("No held-out Medium task trees found")
++    ROOT.mkdir(parents=True, exist_ok=True)
++    manifest = ROOT / "manifest_1000.jsonl"
++    with manifest.open("w", encoding="utf-8") as handle:
++        for index in range(EPISODES):
++            task = heldout[index % len(heldout)]
++            handle.write(json.dumps({
++                "episode": index,
++                "environment": ENV_ID,
++                "task_id": task.task_id,
++                "task_tree_rules": list(task.rule_text),
++                "seed": SEED_START + index,
++                "split": "ood_depth3_heldout_tree",
++                "train_data_exposure": False,
++            }, sort_keys=True) + "\n")
++    summary = {
++        "episodes": EPISODES,
++        "environment": ENV_ID,
++        "seed_start": SEED_START,
++        "heldout_task_ids": [task.task_id for task in heldout],
++        "heldout_task_trees": {str(task.task_id): list(task.rule_text) for task in heldout},
++        "definition": "Depth-3 crafting dependency trees unseen by a WAM trained only on ExactCraft Easy depth-2 trajectories.",
++        "not_trajectories": True,
++        "evaluation": "Run WAM closed-loop on each (task_id, seed); report SR and path length.",
++    }
++    (ROOT / "README.json").write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
++    print(json.dumps(summary, indent=2))
++
++if __name__ == "__main__":
++    main()
+diff --git a/home/user8_3/xland/xland-minigrid-five-object/src/xminigrid/envs/easy_crafting.py b/home/user8_3/xland/xland-minigrid-five-object/src/xminigrid/envs/easy_crafting.py
+new file mode 100644
+index 0000000..236434f
+--- /dev/null
++++ b/home/user8_3/xland/xland-minigrid-five-object/src/xminigrid/envs/easy_crafting.py
+@@ -0,0 +1,164 @@
++"""Depth-2 ExactCraft Easy tasks.
++
++Easy keeps the complete two-room key-door-goal pipeline while reducing the
++world dynamics from nine rules and three stages to six rules and two stages.
++"""
++
++from __future__ import annotations
++
++from dataclasses import dataclass
++from itertools import product
++
++import jax.numpy as jnp
++
++from ..core.goals import AgentNearGoal
++from ..core.rules import TileNearRule
++from ..types import RuleSet
++from .five_object_crafting import (
++    A,
++    B,
++    BLUE_KEY,
++    C,
++    D,
++    YELLOW_STAR,
++    FiveObjectCraftingEnv,
++)
++from .xland import XLandEnvParams
++
++
++RULE_IDS = tuple(f"R{index}" for index in range(1, 7))
++RULE_TEXT = {
++    "R1": "A+B->D",
++    "R2": "A+C->D",
++    "R3": "B+C->D",
++    "R4": "D+A->K",
++    "R5": "D+B->K",
++    "R6": "D+C->K",
++}
++
++STAGE1_RULES = (
++    TileNearRule(tile_a=A, tile_b=B, prod_tile=D),
++    TileNearRule(tile_a=A, tile_b=C, prod_tile=D),
++    TileNearRule(tile_a=B, tile_b=C, prod_tile=D),
++)
++STAGE2_RULES = (
++    TileNearRule(tile_a=D, tile_b=A, prod_tile=BLUE_KEY),
++    TileNearRule(tile_a=D, tile_b=B, prod_tile=BLUE_KEY),
++    TileNearRule(tile_a=D, tile_b=C, prod_tile=BLUE_KEY),
++)
++STAGE1_INPUTS = ((A, B), (A, C), (B, C))
++STAGE1_SYMBOLS = (("A", "B"), ("A", "C"), ("B", "C"))
++STAGE2_CATALYSTS = (A, B, C)
++STAGE2_SYMBOLS = ("A", "B", "C")
++
++
++@dataclass(frozen=True)
++class ExactCraftEasyTask:
++    task_id: int
++    split: str
++    stage1_idx: int
++    stage2_idx: int
++    rule_ids: tuple[str, str]
++    initial_symbols: tuple[str, str, str]
++    ruleset: RuleSet
++
++    @property
++    def rule_text(self) -> tuple[str, str]:
++        return tuple(RULE_TEXT[rule_id] for rule_id in self.rule_ids)
++
++
++def _make_tasks() -> tuple[ExactCraftEasyTask, ...]:
++    tasks = []
++    for task_id, (stage1_idx, stage2_idx) in enumerate(
++        product(range(3), repeat=2),
++        start=1,
++    ):
++        stage1_rule = STAGE1_RULES[stage1_idx]
++        stage2_rule = STAGE2_RULES[stage2_idx]
++        split = "val" if stage1_idx == stage2_idx else "train"
++        ruleset = RuleSet(
++            goal=AgentNearGoal(tile=YELLOW_STAR).encode(),
++            # Reverse-topological order prevents both stages from firing after
++            # a single put-down action.
++            rules=jnp.stack((stage2_rule.encode(), stage1_rule.encode())),
++            init_tiles=jnp.stack(
++                (
++                    STAGE1_INPUTS[stage1_idx][0],
++                    STAGE1_INPUTS[stage1_idx][1],
++                    STAGE2_CATALYSTS[stage2_idx],
++                )
++            ),
++        )
++        tasks.append(
++            ExactCraftEasyTask(
++                task_id=task_id,
++                split=split,
++                stage1_idx=stage1_idx,
++                stage2_idx=stage2_idx,
++                rule_ids=(
++                    f"R{stage1_idx + 1}",
++                    f"R{stage2_idx + 4}",
++                ),
++                initial_symbols=(
++                    STAGE1_SYMBOLS[stage1_idx][0],
++                    STAGE1_SYMBOLS[stage1_idx][1],
++                    STAGE2_SYMBOLS[stage2_idx],
++                ),
++                ruleset=ruleset,
++            )
++        )
++
++    result = tuple(tasks)
++    train_tasks = tuple(task for task in result if task.split == "train")
++    val_tasks = tuple(task for task in result if task.split == "val")
++    assert len(result) == 9
++    assert len(train_tasks) == 6
++    assert len(val_tasks) == 3
++    assert {rule for task in train_tasks for rule in task.rule_ids} == set(RULE_IDS)
++    assert {rule for task in val_tasks for rule in task.rule_ids} == set(RULE_IDS)
++    return result
++
++
++TASKS = _make_tasks()
++TRAIN_TASKS = tuple(task for task in TASKS if task.split == "train")
++VAL_TASKS = tuple(task for task in TASKS if task.split == "val")
++
++
++def get_easy_task(task_id: int) -> ExactCraftEasyTask:
++    if not 1 <= task_id <= len(TASKS):
++        raise ValueError(f"task_id must be in [1, {len(TASKS)}], got {task_id}")
++    return TASKS[task_id - 1]
++
++
++class ExactCraftEasyEnv(FiveObjectCraftingEnv):
++    """ExactCraft layout with the depth-2 Easy ruleset."""
++
++    def default_params(self, **kwargs) -> XLandEnvParams:
++        params = super().default_params().replace(
++            max_steps=192,
++            grid_type="EXACT_CRAFT_EASY_V1",
++        )
++        return params.replace(**kwargs)
++
++
++def make_easy_env_and_params(
++    task_id: int,
++    **param_overrides,
++) -> tuple[ExactCraftEasyEnv, XLandEnvParams, ExactCraftEasyTask]:
++    task = get_easy_task(task_id)
++    env = ExactCraftEasyEnv()
++    params = env.default_params(ruleset=task.ruleset, **param_overrides)
++    return env, params, task
++
++
++__all__ = [
++    "RULE_IDS",
++    "RULE_TEXT",
++    "TASKS",
++    "TRAIN_TASKS",
++    "VAL_TASKS",
++    "ExactCraftEasyTask",
++    "ExactCraftEasyEnv",
++    "get_easy_task",
++    "make_easy_env_and_params",
++]
+diff --git a/home/user8_3/xland/xland-minigrid-five-object/src/xminigrid/envs/five_object_crafting.py b/home/user8_3/xland/xland-minigrid-five-object/src/xminigrid/envs/five_object_crafting.py
+new file mode 100644
+index 0000000..e5e5474
+--- /dev/null
++++ b/home/user8_3/xland/xland-minigrid-five-object/src/xminigrid/envs/five_object_crafting.py
+@@ -0,0 +1,458 @@
++"""Two-room five-object TileNear crafting tasks for XLand-MiniGrid.
++
++The task family has nine shared primitive rules and 27 three-stage task trees.
++All primitive rules occur in both splits; validation only holds out complete
++rule combinations.
++"""
++
++from __future__ import annotations
++
++from dataclasses import dataclass
++from itertools import product
++
++import jax
++import jax.numpy as jnp
++import numpy as np
++
++from ..core.constants import TILES_REGISTRY, Colors, Tiles
++from ..core.goals import AgentNearGoal
++from ..core.grid import room, sample_coordinates, sample_direction, vertical_line
++from ..core.rules import TileNearRule
++from ..rendering.rgb_render import render as rgb_render
++from ..rendering.rgb_render import render_tile
++from ..types import AgentState, EnvCarry, RuleSet, State, TimeStep
++from .xland import XLandEnvParams, XLandMiniGrid
++
++
++# Five ordinary object identities.
++A = TILES_REGISTRY[Tiles.BALL, Colors.RED]
++B = TILES_REGISTRY[Tiles.SQUARE, Colors.GREEN]
++C = TILES_REGISTRY[Tiles.PYRAMID, Colors.WHITE]
++D = TILES_REGISTRY[Tiles.HEX, Colors.PURPLE]
++E = TILES_REGISTRY[Tiles.BALL, Colors.ORANGE]
++
++# Special objects, excluded from the five-object vocabulary.
++BLUE_KEY = TILES_REGISTRY[Tiles.KEY, Colors.BLUE]
++YELLOW_STAR = TILES_REGISTRY[Tiles.STAR, Colors.YELLOW]
++BLUE_LOCKED_DOOR = TILES_REGISTRY[Tiles.DOOR_LOCKED, Colors.BLUE]
++
++OBJECT_SYMBOLS = ("A", "B", "C", "D", "E")
++RULE_IDS = tuple(f"R{idx}" for idx in range(1, 10))
++
++
++def _resize_sprite_nearest(
++    image: np.ndarray,
++    mask: np.ndarray,
++    size: int,
++) -> tuple[np.ndarray, np.ndarray]:
++    y_indices = np.linspace(0, image.shape[0] - 1, size).astype(np.int32)
++    x_indices = np.linspace(0, image.shape[1] - 1, size).astype(np.int32)
++    return (
++        image[np.ix_(y_indices, x_indices)],
++        mask[np.ix_(y_indices, x_indices)],
++    )
++
++
++def _dilate_mask(mask: np.ndarray) -> np.ndarray:
++    padded = np.pad(mask, 1, mode="constant", constant_values=False)
++    dilated = np.zeros_like(mask)
++    for y_offset in range(3):
++        for x_offset in range(3):
++            dilated |= padded[
++                y_offset : y_offset + mask.shape[0],
++                x_offset : x_offset + mask.shape[1],
++            ]
++    return dilated
++
++
++def _render_agent_with_pocket(
++    grid_tile: np.ndarray,
++    pocket: np.ndarray,
++    direction: int,
++    tile_size: int,
++) -> np.ndarray:
++    """Render a carried object at the triangle tip, inside the agent cell."""
++
++    agent_tile = render_tile(
++        tile=tuple(grid_tile.tolist()),
++        agent_direction=direction,
++        highlight=False,
++        tile_size=tile_size,
++    ).copy()
++    if int(pocket[0]) == Tiles.EMPTY:
++        return agent_tile
++
++    floor = np.asarray(TILES_REGISTRY[Tiles.FLOOR, Colors.BLACK])
++    floor_image = render_tile(
++        tile=tuple(floor.tolist()),
++        agent_direction=None,
++        highlight=False,
++        tile_size=tile_size,
++    )
++    object_image = render_tile(
++        tile=tuple(pocket.tolist()),
++        agent_direction=None,
++        highlight=False,
++        tile_size=tile_size,
++    )
++    object_mask = np.any(object_image != floor_image, axis=-1)
++
++    # Base sprites face up. Rotate clockwise with agent direction.
++    rotation = (-direction) % 4
++    object_image = np.rot90(object_image, k=rotation)
++    object_mask = np.rot90(object_mask, k=rotation)
++    object_rows, object_cols = np.where(object_mask)
++    if len(object_rows) == 0:
++        return agent_tile
++
++    object_image = object_image[
++        object_rows.min() : object_rows.max() + 1,
++        object_cols.min() : object_cols.max() + 1,
++    ]
++    object_mask = object_mask[
++        object_rows.min() : object_rows.max() + 1,
++        object_cols.min() : object_cols.max() + 1,
++    ]
++    sprite_size = max(8, int(round(tile_size * 0.40)))
++    object_image, object_mask = _resize_sprite_nearest(
++        object_image,
++        object_mask,
++        sprite_size,
++    )
++
++    center = tile_size // 2
++    front_offset = int(round(tile_size * 0.27))
++    centers = (
++        (center - front_offset, center),
++        (center, center + front_offset),
++        (center + front_offset, center),
++        (center, center - front_offset),
++    )
++    center_y, center_x = centers[direction]
++    top = int(np.clip(center_y - sprite_size // 2, 0, tile_size - sprite_size))
++    left = int(np.clip(center_x - sprite_size // 2, 0, tile_size - sprite_size))
++    target = agent_tile[top : top + sprite_size, left : left + sprite_size]
++
++    outline = _dilate_mask(object_mask) & ~object_mask
++    target[outline] = np.asarray((10, 10, 10), dtype=np.uint8)
++    target[object_mask] = object_image[object_mask]
++    return agent_tile
++
++
++STAGE1_RULES = (
++    TileNearRule(tile_a=A, tile_b=B, prod_tile=D),  # R1
++    TileNearRule(tile_a=A, tile_b=C, prod_tile=D),  # R2
++    TileNearRule(tile_a=B, tile_b=C, prod_tile=D),  # R3
++)
++STAGE2_RULES = (
++    TileNearRule(tile_a=D, tile_b=A, prod_tile=E),  # R4
++    TileNearRule(tile_a=D, tile_b=B, prod_tile=E),  # R5
++    TileNearRule(tile_a=D, tile_b=C, prod_tile=E),  # R6
++)
++STAGE3_RULES = (
++    TileNearRule(tile_a=E, tile_b=A, prod_tile=BLUE_KEY),  # R7
++    TileNearRule(tile_a=E, tile_b=B, prod_tile=BLUE_KEY),  # R8
++    TileNearRule(tile_a=E, tile_b=C, prod_tile=BLUE_KEY),  # R9
++)
++
++STAGE1_INPUTS = ((A, B), (A, C), (B, C))
++STAGE2_CATALYSTS = (A, B, C)
++STAGE3_CATALYSTS = (A, B, C)
++
++RULE_TEXT = {
++    "R1": "A+B->D",
++    "R2": "A+C->D",
++    "R3": "B+C->D",
++    "R4": "D+A->E",
++    "R5": "D+B->E",
++    "R6": "D+C->E",
++    "R7": "E+A->K",
++    "R8": "E+B->K",
++    "R9": "E+C->K",
++}
++
++
++@dataclass(frozen=True)
++class CraftingTask:
++    task_id: int
++    split: str
++    stage1_idx: int
++    stage2_idx: int
++    stage3_idx: int
++    rule_ids: tuple[str, str, str]
++    initial_symbols: tuple[str, str, str, str]
++    ruleset: RuleSet
++
++    @property
++    def rule_text(self) -> tuple[str, str, str]:
++        return tuple(RULE_TEXT[rule_id] for rule_id in self.rule_ids)
++
++
++def _symbol_for_base_index(index: int) -> str:
++    return ("A", "B", "C")[index]
++
++
++def _make_tasks() -> tuple[CraftingTask, ...]:
++    tasks = []
++    for task_id, (stage1_idx, stage2_idx, stage3_idx) in enumerate(
++        product(range(3), repeat=3),
++        start=1,
++    ):
++        stage1_rule = STAGE1_RULES[stage1_idx]
++        stage2_rule = STAGE2_RULES[stage2_idx]
++        stage3_rule = STAGE3_RULES[stage3_idx]
++
++        # Reverse-topological evaluation prevents two crafting stages from
++        # firing during the same put-down action.
++        encoded_rules = jnp.stack(
++            (
++                stage3_rule.encode(),
++                stage2_rule.encode(),
++                stage1_rule.encode(),
++            )
++        )
++        initial_tiles = jnp.stack(
++            (
++                STAGE1_INPUTS[stage1_idx][0],
++                STAGE1_INPUTS[stage1_idx][1],
++                STAGE2_CATALYSTS[stage2_idx],
++                STAGE3_CATALYSTS[stage3_idx],
++            )
++        )
++        split = "val" if stage3_idx == (stage1_idx + stage2_idx) % 3 else "train"
++        ruleset = RuleSet(
++            goal=AgentNearGoal(tile=YELLOW_STAR).encode(),
++            rules=encoded_rules,
++            init_tiles=initial_tiles,
++        )
++        stage1_symbols = (("A", "B"), ("A", "C"), ("B", "C"))[stage1_idx]
++        tasks.append(
++            CraftingTask(
++                task_id=task_id,
++                split=split,
++                stage1_idx=stage1_idx,
++                stage2_idx=stage2_idx,
++                stage3_idx=stage3_idx,
++                rule_ids=(
++                    f"R{stage1_idx + 1}",
++                    f"R{stage2_idx + 4}",
++                    f"R{stage3_idx + 7}",
++                ),
++                initial_symbols=(
++                    stage1_symbols[0],
++                    stage1_symbols[1],
++                    _symbol_for_base_index(stage2_idx),
++                    _symbol_for_base_index(stage3_idx),
++                ),
++                ruleset=ruleset,
++            )
++        )
++
++    task_tuple = tuple(tasks)
++    train_tasks = tuple(task for task in task_tuple if task.split == "train")
++    val_tasks = tuple(task for task in task_tuple if task.split == "val")
++    train_rules = {rule for task in train_tasks for rule in task.rule_ids}
++    val_rules = {rule for task in val_tasks for rule in task.rule_ids}
++    assert len(task_tuple) == 27
++    assert len(train_tasks) == 18
++    assert len(val_tasks) == 9
++    assert train_rules == val_rules == set(RULE_IDS)
++    return task_tuple
++
++
++TASKS = _make_tasks()
++TRAIN_TASKS = tuple(task for task in TASKS if task.split == "train")
++VAL_TASKS = tuple(task for task in TASKS if task.split == "val")
++
++
++def get_task(task_id: int) -> CraftingTask:
++    if not 1 <= task_id <= len(TASKS):
++        raise ValueError(f"task_id must be in [1, {len(TASKS)}], got {task_id}")
++    return TASKS[task_id - 1]
++
++
++class FiveObjectCraftingEnv(XLandMiniGrid):
++    """Two rooms separated by one blue locked door.
++
++    Agent and four ingredient instances are sampled in one room. A yellow star
++    is sampled in the other. The active three-rule task must produce the blue
++    key before the agent can open the door and reach the star.
++    """
++
++    def default_params(self, **kwargs) -> XLandEnvParams:
++        params = XLandEnvParams(
++            height=8,
++            width=8,
++            view_size=8,
++            max_steps=256,
++            grid_type="FIVE_OBJECT_CRAFTING",
++        )
++        return params.replace(**kwargs)
++
++    def observation_shape(self, params: XLandEnvParams) -> dict[str, tuple[int, ...]]:
++        return {
++            "img": (params.height, params.width, 3),
++            "pocket": (2,),
++        }
++
++    @staticmethod
++    def _full_map_observation(timestep: TimeStep) -> dict[str, jax.Array]:
++        """Return the complete map in fixed world coordinates.
++
++        Channels 0–1 contain tile and color IDs. Channel 2 is zero except at
++        the agent position, where it stores direction + 1. Pocket state remains
++        separate so no task-relevant information is dropped.
++        """
++
++        state = timestep.state
++        agent_layer = jnp.zeros(state.grid.shape[:2], dtype=jnp.uint8)
++        agent_layer = agent_layer.at[
++            state.agent.position[0],
++            state.agent.position[1],
++        ].set(state.agent.direction.astype(jnp.uint8) + 1)
++        return {
++            "img": jnp.concatenate((state.grid, agent_layer[..., None]), axis=-1),
++            "pocket": state.agent.pocket,
++        }
++
++    def reset(self, params: XLandEnvParams, key: jax.Array) -> TimeStep:
++        timestep = super().reset(params, key)
++        return timestep.replace(observation=self._full_map_observation(timestep))
++
++    def step(self, params: XLandEnvParams, timestep: TimeStep, action) -> TimeStep:
++        timestep = super().step(params, timestep, action)
++        return timestep.replace(observation=self._full_map_observation(timestep))
++
++    def render(self, params: XLandEnvParams, timestep: TimeStep):
++        """Render a fixed-orientation full map without field-of-view shading."""
++
++        if params.render_mode != "rgb_array":
++            return super().render(params, timestep)
++
++        state = timestep.state
++        grid = np.asarray(state.grid)
++        image = rgb_render(grid, agent=None, view_size=params.view_size)
++        agent_y, agent_x = map(int, state.agent.position)
++        tile_size = int(image.shape[0] // params.height)
++        agent_tile = _render_agent_with_pocket(
++            grid_tile=grid[agent_y, agent_x],
++            pocket=np.asarray(state.agent.pocket),
++            direction=int(state.agent.direction),
++            tile_size=tile_size,
++        )
++        image[
++            agent_y * tile_size : (agent_y + 1) * tile_size,
++            agent_x * tile_size : (agent_x + 1) * tile_size,
++        ] = agent_tile
++        return image
++
++    def _generate_problem(self, params: XLandEnvParams, key: jax.Array) -> State[EnvCarry]:
++        if params.width < 8 or params.height < 8:
++            raise ValueError("Use width and height >= 8.")
++
++        (
++            next_key,
++            door_key,
++            side_key,
++            objects_key,
++            star_key,
++            direction_key,
++        ) = jax.random.split(key, num=6)
++
++        agent_on_left = jax.random.bernoulli(side_key)
++        # On an even-width map a fixed one-tile divider makes the rooms
++        # asymmetric. Shift the divider during mirroring so the agent always
++        # gets three interior columns and the star room gets two.
++        divider_x = jnp.where(
++            agent_on_left,
++            params.width // 2,
++            params.width // 2 - 1,
++        )
++        door_y = jax.random.randint(door_key, shape=(), minval=1, maxval=params.height - 1)
++        grid = room(params.height, params.width)
++        grid = vertical_line(
++            grid,
++            divider_x,
++            0,
++            params.height,
++            TILES_REGISTRY[Tiles.WALL, Colors.GREY],
++        )
++        grid = grid.at[door_y, divider_x].set(BLUE_LOCKED_DOOR)
++
++        x_coords = jnp.broadcast_to(
++            jnp.arange(params.width)[None, :],
++            (params.height, params.width),
++        )
++        left_mask = x_coords < divider_x
++        right_mask = x_coords > divider_x
++        agent_room_mask = jnp.where(agent_on_left, left_mask, right_mask)
++        goal_room_mask = jnp.where(agent_on_left, right_mask, left_mask)
++
++        num_objects = len(params.ruleset.init_tiles)
++        object_and_agent_positions = sample_coordinates(
++            objects_key,
++            grid,
++            num=num_objects + 1,
++            mask=agent_room_mask,
++        )
++        star_position = sample_coordinates(
++            star_key,
++            grid,
++            num=1,
++            mask=goal_room_mask,
++        )[0]
++
++        for idx in range(num_objects):
++            position = object_and_agent_positions[idx]
++            grid = grid.at[position[0], position[1]].set(params.ruleset.init_tiles[idx])
++        grid = grid.at[star_position[0], star_position[1]].set(YELLOW_STAR)
++
++        agent = AgentState(
++            position=object_and_agent_positions[-1],
++            direction=sample_direction(direction_key),
++        )
++        return State(
++            key=next_key,
++            step_num=jnp.asarray(0),
++            grid=grid,
++            agent=agent,
++            goal_encoding=params.ruleset.goal,
++            rule_encoding=params.ruleset.rules,
++            carry=EnvCarry(),
++        )
++
++
++def make_env_and_params(
++    task_id: int,
++    **param_overrides,
++) -> tuple[FiveObjectCraftingEnv, XLandEnvParams, CraftingTask]:
++    task = get_task(task_id)
++    env = FiveObjectCraftingEnv()
++    params = env.default_params(ruleset=task.ruleset, **param_overrides)
++    return env, params, task
++
++
++# Stable name for the exact color+shape dynamics.  Keep the original class
++# name as a backwards-compatible alias for existing scripts/checkpoints.
++ExactCraftEnv = FiveObjectCraftingEnv
++
++
++__all__ = [
++    "A",
++    "B",
++    "C",
++    "D",
++    "E",
++    "BLUE_KEY",
++    "YELLOW_STAR",
++    "BLUE_LOCKED_DOOR",
++    "RULE_TEXT",
++    "TASKS",
++    "TRAIN_TASKS",
++    "VAL_TASKS",
++    "CraftingTask",
++    "FiveObjectCraftingEnv",
++    "ExactCraftEnv",
++    "get_task",
++    "make_env_and_params",
++]
+diff --git a/home/user8_3/xland/xland-minigrid-five-object/training/train_privileged_crafting_ppo.py b/home/user8_3/xland/xland-minigrid-five-object/training/train_privileged_crafting_ppo.py
+new file mode 100644
+index 0000000..f24989c
+--- /dev/null
++++ b/home/user8_3/xland/xland-minigrid-five-object/training/train_privileged_crafting_ppo.py
+@@ -0,0 +1,799 @@
++"""Fast privileged PPO for the Easy crafting environments.
++
++The collector policy is deliberately privileged.  It receives the fixed
++full-map symbolic observation, carried tile, active goal/rules, exact crafting
++progress, and a ground-truth valid-action mask.  Native task completion remains
++the success criterion.  Potential-based progress shaping only makes sparse
++exploration practical on a short project schedule.
++
++This script trains one policy across every train task in a family and evaluates
++the same checkpoint on both the train and held-out validation task banks.
++"""
++
++from __future__ import annotations
++
++import argparse
++import json
++import os
++import signal
++import time
++from dataclasses import asdict, dataclass
++from pathlib import Path
++from typing import Any
++
++import distrax
++import flax.linen as nn
++from flax import serialization, struct
++from flax.training.train_state import TrainState
++import jax
++import jax.numpy as jnp
++import jax.tree_util as jtu
++import numpy as np
++import optax
++from tensorboardX import SummaryWriter
++
++import xminigrid
++from xminigrid.benchmarks import Benchmark
++from xminigrid.core.constants import DIRECTIONS, NUM_COLORS, NUM_TILES, Colors, Tiles
++from xminigrid.core.grid import check_can_put, check_pickable, check_walkable
++from xminigrid.types import RuleSet
++from xminigrid.wrappers import (
++    GymAutoResetWrapper,
++    RulesAndGoalsObservationWrapper,
++    Wrapper,
++)
++
++
++jax.config.update("jax_threefry_partitionable", True)
++
++
++SUPPORTED_ENVS = (
++    "XLand-MiniGrid-ExactCraft-Easy-8x8-v1",
++    "XLand-MiniGrid-ShapeCraft-Easy-8x8-v1",
++    "XLand-MiniGrid-EmbodiedExactCraft-Stride2-Adaptive-Easy-8x8-v1",
++    "XLand-MiniGrid-EmbodiedExactCraft-Omni8-Easy-8x8-v1",
++    "XLand-MiniGrid-EmbodiedExactCraft-Crab-Easy-8x8-v1",
++)
++
++OMNI_DIRECTIONS = jnp.asarray(
++    (
++        (-1, 0),
++        (-1, 1),
++        (0, 1),
++        (1, 1),
++        (1, 0),
++        (1, -1),
++        (0, -1),
++        (-1, -1),
++    ),
++    dtype=jnp.int32,
++)
++
++
++@dataclass
++class Config:
++    env_id: str
++    run_dir: str
++    hours: float = 4.0
++    total_timesteps: int = 200_000_000
++    num_envs: int = 512
++    rollout_steps: int = 64
++    updates_per_block: int = 8
++    update_epochs: int = 2
++    num_minibatches: int = 8
++    learning_rate: float = 3e-4
++    gamma: float = 0.99
++    gae_lambda: float = 0.95
++    clip_eps: float = 0.2
++    ent_coef: float = 0.01
++    vf_coef: float = 0.5
++    max_grad_norm: float = 0.5
++    eval_every_blocks: int = 4
++    eval_episodes: int = 192
++    seed: int = 42
++    resume: str | None = None
++
++    @property
++    def transitions_per_update(self) -> int:
++        return self.num_envs * self.rollout_steps
++
++    @property
++    def transitions_per_block(self) -> int:
++        return self.transitions_per_update * self.updates_per_block
++
++
++def _progress(state) -> jax.Array:
++    """0=ingredients, 1=D/hex, 2=key, 3=open door."""
++
++    grid_types = state.grid[..., 0]
++    pocket_type = state.agent.pocket[0]
++    has_intermediate = jnp.any(grid_types == Tiles.HEX) | (pocket_type == Tiles.HEX)
++    has_key = jnp.any(grid_types == Tiles.KEY) | (pocket_type == Tiles.KEY)
++    door_open = jnp.any(grid_types == Tiles.DOOR_OPEN)
++    return jnp.where(door_open, 3, jnp.where(has_key, 2, jnp.where(has_intermediate, 1, 0)))
++
++
++def _action_mask(state, movement: str) -> jax.Array:
++    """Ground-truth mask for the six standard crafting actions."""
++
++    if movement == "omni8":
++        delta = jax.lax.dynamic_index_in_dim(
++            OMNI_DIRECTIONS,
++            state.agent.direction % 8,
++            keepdims=False,
++        )
++    else:
++        delta = jax.lax.dynamic_index_in_dim(
++            DIRECTIONS,
++            state.agent.direction % 4,
++            keepdims=False,
++        )
++    target = jnp.clip(
++        state.agent.position + delta,
++        min=jnp.asarray((0, 0)),
++        max=jnp.asarray((state.grid.shape[0] - 1, state.grid.shape[1] - 1)),
++    )
++    target_tile = state.grid[target[0], target[1]]
++    pocket = state.agent.pocket
++    pocket_empty = pocket[0] == Tiles.EMPTY
++    if movement == "crab":
++        move_delta = jax.lax.dynamic_index_in_dim(
++            DIRECTIONS,
++            (state.agent.direction + 1) % 4,
++            keepdims=False,
++        )
++        move_target = jnp.clip(
++            state.agent.position + move_delta,
++            min=jnp.asarray((0, 0)),
++            max=jnp.asarray((state.grid.shape[0] - 1, state.grid.shape[1] - 1)),
++        )
++        forward_ok = check_walkable(state.grid, move_target)
++    elif movement == "omni8":
++        orthogonal_y = jnp.clip(
++            state.agent.position + jnp.asarray((delta[0], 0)),
++            min=jnp.asarray((0, 0)),
++            max=jnp.asarray((state.grid.shape[0] - 1, state.grid.shape[1] - 1)),
++        )
++        orthogonal_x = jnp.clip(
++            state.agent.position + jnp.asarray((0, delta[1])),
++            min=jnp.asarray((0, 0)),
++            max=jnp.asarray((state.grid.shape[0] - 1, state.grid.shape[1] - 1)),
++        )
++        diagonal = (delta[0] != 0) & (delta[1] != 0)
++        corner_clear = check_walkable(state.grid, orthogonal_y) & check_walkable(
++            state.grid,
++            orthogonal_x,
++        )
++        forward_ok = check_walkable(state.grid, target) & jnp.where(
++            diagonal,
++            corner_clear,
++            True,
++        )
++    else:
++        # Standard and Stride2-Adaptive can move iff the first microstep is
++        # walkable. Stride2 then optionally executes its second microstep.
++        forward_ok = check_walkable(state.grid, target)
++    pickup_ok = check_pickable(state.grid, target) & pocket_empty
++    putdown_ok = check_can_put(state.grid, target) & (~pocket_empty)
++    locked_ok = (
++        (target_tile[0] == Tiles.DOOR_LOCKED)
++        & (pocket[0] == Tiles.KEY)
++        & (pocket[1] == target_tile[1])
++    )
++    toggle_ok = locked_ok | (target_tile[0] == Tiles.DOOR_CLOSED) | (target_tile[0] == Tiles.DOOR_OPEN)
++    return jnp.stack(
++        (
++            forward_ok,
++            jnp.asarray(True),
++            jnp.asarray(True),
++            pickup_ok,
++            putdown_ok,
++            toggle_ok,
++        )
++    )
++
++
++class PrivilegedCraftingWrapper(Wrapper):
++    """Adds privileged features, an action mask, and potential shaping."""
++
++    success_scale: float = 10.0
++    stage_scale: float = 0.30
++    pocket_scale: float = 0.03
++
++    def __init__(self, env, movement: str):
++        super().__init__(env)
++        self.movement = movement
++
++    def observation_shape(self, params):
++        shape = dict(self._env.observation_shape(params))
++        shape.update({"progress": (4,), "action_mask": (6,)})
++        return shape
++
++    def _potential(self, state):
++        pocket_nonempty = state.agent.pocket[0] != Tiles.EMPTY
++        return self.stage_scale * _progress(state) + self.pocket_scale * pocket_nonempty
++
++    def _extend(self, timestep):
++        observation = dict(timestep.observation)
++        observation["progress"] = jax.nn.one_hot(_progress(timestep.state), 4)
++        observation["action_mask"] = _action_mask(
++            timestep.state,
++            self.movement,
++        )
++        return timestep.replace(observation=observation)
++
++    def reset(self, params, key):
++        return self._extend(self._env.reset(params, key))
++
++    def step(self, params, timestep, action):
++        old_potential = self._potential(timestep.state)
++        next_timestep = self._env.step(params, timestep, action)
++        new_potential = self._potential(next_timestep.state)
++        shaped_reward = (
++            self.success_scale * next_timestep.reward
++            + self.gamma * new_potential
++            - old_potential
++        )
++        return self._extend(next_timestep.replace(reward=shaped_reward))
++
++    @property
++    def gamma(self):
++        return 0.99
++
++
++class PrivilegedActorCritic(nn.Module):
++    num_actions: int = 6
++    embed_dim: int = 16
++    hidden_dim: int = 256
++    agent_direction_classes: int = 5
++
++    @nn.compact
++    def __call__(self, observation):
++        img = observation["img"].astype(jnp.int32)
++        tile_emb = nn.Embed(NUM_TILES, self.embed_dim)(img[..., 0])
++        color_emb = nn.Embed(NUM_COLORS, self.embed_dim)(img[..., 1])
++        agent_emb = jax.nn.one_hot(
++            img[..., 2],
++            self.agent_direction_classes,
++        )
++        grid_features = jnp.concatenate((tile_emb, color_emb, agent_emb), axis=-1)
++        grid_features = grid_features.reshape((*grid_features.shape[:-3], -1))
++        # A flat MLP is intentional.  The map is only 8x8 and absolute world
++        # coordinates are task-relevant.  It also avoids a cuDNN dependency,
++        # making runs robust on older V100 driver/runtime combinations.
++        grid_features = nn.relu(nn.Dense(512)(grid_features))
++        grid_features = nn.relu(nn.Dense(self.hidden_dim)(grid_features))
++
++        pocket = observation["pocket"].astype(jnp.int32)
++        pocket_features = jnp.concatenate(
++            (
++                nn.Embed(NUM_TILES, self.embed_dim)(pocket[..., 0]),
++                nn.Embed(NUM_COLORS, self.embed_dim)(pocket[..., 1]),
++            ),
++            axis=-1,
++        )
++
++        # Encodings are short integer programs.  Token one-hot keeps their
++        # identities exact instead of imposing an arbitrary ordinal geometry.
++        rule_tokens = jax.nn.one_hot(observation["rule_encoding"].astype(jnp.int32), 32)
++        goal_tokens = jax.nn.one_hot(observation["goal_encoding"].astype(jnp.int32), 32)
++        program_features = jnp.concatenate(
++            (
++                rule_tokens.reshape((*rule_tokens.shape[:-3], -1)),
++                goal_tokens.reshape((*goal_tokens.shape[:-2], -1)),
++            ),
++            axis=-1,
++        )
++        program_features = nn.relu(nn.Dense(128)(program_features))
++
++        features = jnp.concatenate(
++            (
++                grid_features,
++                pocket_features,
++                program_features,
++                observation["direction"],
++                observation["progress"],
++            ),
++            axis=-1,
++        )
++        features = nn.tanh(nn.Dense(self.hidden_dim)(features))
++        features = nn.tanh(nn.Dense(self.hidden_dim)(features))
++
++        logits = nn.Dense(
++            self.num_actions,
++            kernel_init=nn.initializers.orthogonal(0.01),
++        )(features)
++        logits = jnp.where(observation["action_mask"], logits, -1e9)
++        value = nn.Dense(1, kernel_init=nn.initializers.orthogonal(1.0))(features)
++        return distrax.Categorical(logits=logits), jnp.squeeze(value, axis=-1)
++
++
++class Transition(struct.PyTreeNode):
++    done: jax.Array
++    action: jax.Array
++    value: jax.Array
++    reward: jax.Array
++    success: jax.Array
++    log_prob: jax.Array
++    observation: Any
++
++
++def _make_benchmark(tasks) -> Benchmark:
++    return Benchmark(
++        goals=jnp.stack(tuple(task.ruleset.goal for task in tasks)),
++        rules=jnp.stack(tuple(task.ruleset.rules for task in tasks)),
++        init_tiles=jnp.stack(tuple(task.ruleset.init_tiles for task in tasks)),
++        num_rules=jnp.full((len(tasks),), tasks[0].ruleset.rules.shape[0], dtype=jnp.int32),
++    )
++
++
++def task_banks(env_id: str) -> tuple[Benchmark, Benchmark]:
++    if env_id == "XLand-MiniGrid-ShapeCraft-Easy-8x8-v1":
++        from xminigrid.envs.shape_crafting_easy import TRAIN_TASKS, VAL_TASKS
++    else:
++        from xminigrid.envs.easy_crafting import TRAIN_TASKS, VAL_TASKS
++    return _make_benchmark(TRAIN_TASKS), _make_benchmark(VAL_TASKS)
++
++
++class FlexibleDirectionObservationWrapper(Wrapper):
++    """Direction observation for both four- and eight-heading embodiments."""
++
++    def __init__(self, env, direction_count: int):
++        super().__init__(env)
++        self.direction_count = direction_count
++
++    def observation_shape(self, params):
++        base_shape = self._env.observation_shape(params)
++        return {**base_shape, "direction": self.direction_count}
++
++    def _extend(self, timestep):
++        observation = dict(timestep.observation)
++        observation["direction"] = jax.nn.one_hot(
++            timestep.state.agent.direction,
++            self.direction_count,
++        )
++        return timestep.replace(observation=observation)
++
++    def reset(self, params, key):
++        return self._extend(self._env.reset(params, key))
++
++    def step(self, params, timestep, action):
++        return self._extend(self._env.step(params, timestep, action))
++
++
++def embodiment_spec(env_id: str) -> tuple[str, int]:
++    if "Omni8" in env_id:
++        return "omni8", 8
++    if "Crab" in env_id:
++        return "crab", 4
++    if "Stride2" in env_id:
++        return "stride2", 4
++    return "standard", 4
++
++
++def make_env(env_id: str, autoreset: bool):
++    env, params = xminigrid.make(env_id)
++    movement, direction_count = embodiment_spec(env_id)
++    env = FlexibleDirectionObservationWrapper(env, direction_count)
++    env = RulesAndGoalsObservationWrapper(env)
++    env = PrivilegedCraftingWrapper(env, movement)
++    if autoreset:
++        env = GymAutoResetWrapper(env)
++    return env, params
++
++
++def _sample_params(params, benchmark: Benchmark, keys):
++    rulesets = jax.vmap(benchmark.sample_ruleset)(keys)
++    return params.replace(ruleset=rulesets)
++
++
++def calculate_gae(transitions, last_value, gamma, gae_lambda):
++    def step(carry, transition):
++        gae, next_value = carry
++        not_done = 1.0 - transition.done
++        delta = transition.reward + gamma * next_value * not_done - transition.value
++        gae = delta + gamma * gae_lambda * not_done * gae
++        return (gae, transition.value), gae
++
++    _, advantages = jax.lax.scan(
++        step,
++        (jnp.zeros_like(last_value), last_value),
++        transitions,
++        reverse=True,
++    )
++    return advantages, advantages + transitions.value
++
++
++def make_train_block(env, base_params, benchmark, config: Config, network):
++    batch_size = config.transitions_per_update
++    if batch_size % config.num_minibatches:
++        raise ValueError("num_envs * rollout_steps must be divisible by num_minibatches")
++
++    def ppo_update(train_state, transitions, advantages, targets, rng):
++        advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
++        flat = jtu.tree_map(lambda x: x.reshape((batch_size,) + x.shape[2:]), transitions)
++        flat_advantages = advantages.reshape((batch_size,))
++        flat_targets = targets.reshape((batch_size,))
++
++        def epoch(carry, _):
++            train_state, rng = carry
++            rng, permutation_key = jax.random.split(rng)
++            permutation = jax.random.permutation(permutation_key, batch_size)
++            shuffled = jtu.tree_map(lambda x: x[permutation], (flat, flat_advantages, flat_targets))
++            minibatches = jtu.tree_map(
++                lambda x: x.reshape((config.num_minibatches, -1) + x.shape[1:]),
++                shuffled,
++            )
++
++            def minibatch_step(train_state, minibatch):
++                mb_transition, mb_advantage, mb_target = minibatch
++
++                def loss_fn(params):
++                    dist, value = network.apply(params, mb_transition.observation)
++                    log_prob = dist.log_prob(mb_transition.action)
++                    ratio = jnp.exp(log_prob - mb_transition.log_prob)
++                    actor_loss = -jnp.minimum(
++                        mb_advantage * ratio,
++                        mb_advantage * jnp.clip(ratio, 1 - config.clip_eps, 1 + config.clip_eps),
++                    ).mean()
++                    value_clipped = mb_transition.value + jnp.clip(
++                        value - mb_transition.value,
++                        -config.clip_eps,
++                        config.clip_eps,
++                    )
++                    value_loss = 0.5 * jnp.maximum(
++                        jnp.square(value - mb_target),
++                        jnp.square(value_clipped - mb_target),
++                    ).mean()
++                    entropy = dist.entropy().mean()
++                    total = actor_loss + config.vf_coef * value_loss - config.ent_coef * entropy
++                    return total, (actor_loss, value_loss, entropy)
++
++                (loss, aux), grads = jax.value_and_grad(loss_fn, has_aux=True)(train_state.params)
++                train_state = train_state.apply_gradients(grads=grads)
++                actor_loss, value_loss, entropy = aux
++                return train_state, jnp.stack((loss, actor_loss, value_loss, entropy))
++
++            train_state, losses = jax.lax.scan(minibatch_step, train_state, minibatches)
++            return (train_state, rng), losses.mean(axis=0)
++
++        (train_state, rng), losses = jax.lax.scan(
++            epoch,
++            (train_state, rng),
++            None,
++            config.update_epochs,
++        )
++        return train_state, rng, losses.mean(axis=0)
++
++    def train_block(train_state, rng):
++        rng, task_key, reset_key = jax.random.split(rng, 3)
++        task_keys = jax.random.split(task_key, config.num_envs)
++        reset_keys = jax.random.split(reset_key, config.num_envs)
++        params = _sample_params(base_params, benchmark, task_keys)
++        timestep = jax.vmap(env.reset, in_axes=(0, 0))(params, reset_keys)
++
++        def update_step(carry, _):
++            train_state, rng, timestep = carry
++
++            def env_step(carry, _):
++                rng, timestep = carry
++                rng, action_key = jax.random.split(rng)
++                dist, value = network.apply(train_state.params, timestep.observation)
++                action, log_prob = dist.sample_and_log_prob(seed=action_key)
++                next_timestep = jax.vmap(env.step, in_axes=(0, 0, 0))(params, timestep, action)
++                transition = Transition(
++                    done=next_timestep.last().astype(jnp.float32),
++                    action=action,
++                    value=value,
++                    reward=next_timestep.reward,
++                    success=(next_timestep.reward >= 0.9) & next_timestep.last(),
++                    log_prob=log_prob,
++                    observation=timestep.observation,
++                )
++                return (rng, next_timestep), transition
++
++            (rng, timestep), transitions = jax.lax.scan(
++                env_step,
++                (rng, timestep),
++                None,
++                config.rollout_steps,
++            )
++            _, last_value = network.apply(train_state.params, timestep.observation)
++            advantages, targets = calculate_gae(
++                transitions,
++                last_value,
++                config.gamma,
++                config.gae_lambda,
++            )
++            train_state, rng, losses = ppo_update(
++                train_state,
++                transitions,
++                advantages,
++                targets,
++                rng,
++            )
++            episodes = transitions.done.sum()
++            successes = transitions.success.sum()
++            metrics = jnp.concatenate(
++                (
++                    losses,
++                    jnp.asarray(
++                        (
++                            transitions.reward.mean(),
++                            episodes,
++                            successes,
++                            successes / jnp.maximum(episodes, 1),
++                        )
++                    ),
++                )
++            )
++            return (train_state, rng, timestep), metrics
++
++        (train_state, rng, _), metrics = jax.lax.scan(
++            update_step,
++            (train_state, rng, timestep),
++            None,
++            config.updates_per_block,
++        )
++        return train_state, rng, metrics.mean(axis=0)
++
++    return jax.jit(train_block)
++
++
++def make_eval_fn(env, base_params, benchmark, config: Config, network):
++    eval_count = config.eval_episodes
++    # Cover the whole bank approximately uniformly.  Small banks are repeated
++    # over many independent reset seeds so SR is not a six-episode estimate.
++    indices = (
++        np.arange(eval_count, dtype=np.int32)
++        * benchmark.num_rulesets()
++        // eval_count
++    )
++    rulesets = RuleSet(
++        goal=benchmark.goals[indices],
++        rules=benchmark.rules[indices],
++        init_tiles=benchmark.init_tiles[indices],
++    )
++    params = base_params.replace(ruleset=rulesets)
++
++    def eval_policy(policy_params, key):
++        keys = jax.random.split(key, eval_count)
++        timestep = jax.vmap(env.reset, in_axes=(0, 0))(params, keys)
++        done = jnp.zeros((eval_count,), dtype=jnp.bool_)
++        success = jnp.zeros((eval_count,), dtype=jnp.bool_)
++        lengths = jnp.zeros((eval_count,), dtype=jnp.int32)
++
++        def one_step(carry, _):
++            timestep, done, success, lengths = carry
++            dist, _ = network.apply(policy_params, timestep.observation)
++            action = dist.mode()
++
++            def step_if_active(single_params, single_timestep, single_action, single_done):
++                return jax.lax.cond(
++                    single_done,
++                    lambda: single_timestep,
++                    lambda: env.step(single_params, single_timestep, single_action),
++                )
++
++            next_timestep = jax.vmap(step_if_active)(params, timestep, action, done)
++            new_success = (~done) & next_timestep.last() & (next_timestep.reward >= 0.9)
++            success = success | new_success
++            lengths = lengths + (~done)
++            done = done | next_timestep.last()
++            return (next_timestep, done, success, lengths), None
++
++        (_, done, success, lengths), _ = jax.lax.scan(
++            one_step,
++            (timestep, done, success, lengths),
++            None,
++            base_params.max_steps,
++        )
++        return success.mean(), lengths.mean(), done.mean()
++
++    return jax.jit(eval_policy)
++
++
++def save_checkpoint(path: Path, train_state, metadata: dict[str, Any]) -> None:
++    path.mkdir(parents=True, exist_ok=True)
++    (path / "train_state.msgpack").write_bytes(serialization.to_bytes(jax.device_get(train_state)))
++    (path / "metadata.json").write_text(json.dumps(metadata, indent=2, sort_keys=True))
++
++
++def train(config: Config):
++    if config.env_id not in SUPPORTED_ENVS:
++        raise ValueError(f"Unsupported env_id {config.env_id!r}; choose one of {SUPPORTED_ENVS}")
++
++    run_dir = Path(config.run_dir).expanduser().resolve()
++    checkpoint_dir = run_dir / "checkpoints"
++    tensorboard_dir = run_dir / "tensorboard"
++    run_dir.mkdir(parents=True, exist_ok=True)
++    (run_dir / "config.json").write_text(json.dumps(asdict(config), indent=2, sort_keys=True))
++    writer = SummaryWriter(str(tensorboard_dir))
++
++    train_benchmark, val_benchmark = task_banks(config.env_id)
++    train_env, base_params = make_env(config.env_id, autoreset=True)
++    eval_env, eval_base_params = make_env(config.env_id, autoreset=False)
++    _, direction_count = embodiment_spec(config.env_id)
++    network = PrivilegedActorCritic(
++        num_actions=train_env.num_actions(base_params),
++        agent_direction_classes=direction_count + 1,
++    )
++
++    rng = jax.random.key(config.seed)
++    rng, init_key, reset_key = jax.random.split(rng, 3)
++    init_params = base_params.replace(ruleset=train_benchmark.get_ruleset(0))
++    init_timestep = train_env.reset(init_params, reset_key)
++    network_params = network.init(init_key, jtu.tree_map(lambda x: x[None], init_timestep.observation))
++    schedule = optax.warmup_cosine_decay_schedule(
++        init_value=config.learning_rate * 0.1,
++        peak_value=config.learning_rate,
++        warmup_steps=100,
++        decay_steps=max(
++            101,
++            config.total_timesteps
++            // config.transitions_per_update
++            * config.update_epochs
++            * config.num_minibatches,
++        ),
++        end_value=config.learning_rate * 0.05,
++    )
++    optimizer = optax.chain(
++        optax.clip_by_global_norm(config.max_grad_norm),
++        optax.adam(schedule, eps=1e-5),
++    )
++    train_state = TrainState.create(apply_fn=network.apply, params=network_params, tx=optimizer)
++    if config.resume:
++        train_state = serialization.from_bytes(train_state, Path(config.resume).read_bytes())
++
++    train_block = make_train_block(train_env, base_params, train_benchmark, config, network)
++    eval_train = make_eval_fn(eval_env, eval_base_params, train_benchmark, config, network)
++    eval_val = make_eval_fn(eval_env, eval_base_params, val_benchmark, config, network)
++
++    stop_requested = False
++
++    def request_stop(signum, frame):
++        nonlocal stop_requested
++        stop_requested = True
++
++    signal.signal(signal.SIGTERM, request_stop)
++    signal.signal(signal.SIGINT, request_stop)
++
++    print(json.dumps(
++        {
++            "event": "start",
++            "env_id": config.env_id,
++            "device": str(jax.devices()[0]),
++            "train_tasks": train_benchmark.num_rulesets(),
++            "val_tasks": val_benchmark.num_rulesets(),
++            "run_dir": str(run_dir),
++        },
++        sort_keys=True,
++    ), flush=True)
++    compile_start = time.time()
++    train_state, rng, _ = jax.block_until_ready(train_block(train_state, rng))
++    compile_seconds = time.time() - compile_start
++    total_steps = config.transitions_per_block
++    block = 1
++    start_time = time.time()
++    threshold_saved: set[int] = set()
++    best_val = -1.0
++
++    while total_steps < config.total_timesteps and not stop_requested:
++        train_start = time.time()
++        train_state, rng, metrics = jax.block_until_ready(train_block(train_state, rng))
++        block_seconds = time.time() - train_start
++        total_steps += config.transitions_per_block
++        block += 1
++        loss, actor_loss, value_loss, entropy, reward, episodes, successes, rollout_sr = map(float, metrics)
++        elapsed = time.time() - start_time
++        sps = config.transitions_per_block / max(block_seconds, 1e-6)
++
++        scalar_metrics = {
++            "train/loss": loss,
++            "train/actor_loss": actor_loss,
++            "train/value_loss": value_loss,
++            "train/entropy": entropy,
++            "train/mean_shaped_reward": reward,
++            "train/episodes_per_update": episodes,
++            "train/successes_per_update": successes,
++            "train/rollout_success_rate": rollout_sr,
++            "system/steps_per_second": sps,
++            "system/elapsed_hours": elapsed / 3600,
++            "system/compile_seconds": compile_seconds,
++        }
++        for name, value in scalar_metrics.items():
++            writer.add_scalar(name, value, total_steps)
++
++        should_eval = block == 2 or block % config.eval_every_blocks == 0
++        if should_eval:
++            rng, train_eval_key, val_eval_key = jax.random.split(rng, 3)
++            train_sr, train_len, train_done = map(
++                float,
++                jax.block_until_ready(eval_train(train_state.params, train_eval_key)),
++            )
++            val_sr, val_len, val_done = map(
++                float,
++                jax.block_until_ready(eval_val(train_state.params, val_eval_key)),
++            )
++            eval_metrics = {
++                "eval/train_success_rate": train_sr,
++                "eval/val_success_rate": val_sr,
++                "eval/train_mean_length": train_len,
++                "eval/val_mean_length": val_len,
++                "eval/train_completed_fraction": train_done,
++                "eval/val_completed_fraction": val_done,
++            }
++            for name, value in eval_metrics.items():
++                writer.add_scalar(name, value, total_steps)
++
++            metadata = {
++                "env_id": config.env_id,
++                "steps": total_steps,
++                "block": block,
++                "elapsed_seconds": elapsed,
++                "train_success_rate": train_sr,
++                "val_success_rate": val_sr,
++                "rollout_success_rate": rollout_sr,
++                "steps_per_second": sps,
++            }
++            save_checkpoint(checkpoint_dir / "latest", train_state, metadata)
++            if val_sr > best_val:
++                best_val = val_sr
++                save_checkpoint(checkpoint_dir / "best_val", train_state, metadata)
++            for threshold in (5, 20, 50, 80, 95):
++                if threshold not in threshold_saved and train_sr >= threshold / 100:
++                    save_checkpoint(checkpoint_dir / f"train_sr_{threshold:02d}", train_state, metadata)
++                    threshold_saved.add(threshold)
++            print(json.dumps({"event": "eval", **metadata}, sort_keys=True), flush=True)
++        else:
++            print(json.dumps(
++                {
++                    "event": "train",
++                    "steps": total_steps,
++                    "block": block,
++                    "elapsed_seconds": elapsed,
++                    "rollout_success_rate": rollout_sr,
++                    "steps_per_second": sps,
++                },
++                sort_keys=True,
++            ), flush=True)
++        writer.flush()
++        if elapsed >= config.hours * 3600:
++            break
++
++    final_metadata = {
++        "env_id": config.env_id,
++        "steps": total_steps,
++        "block": block,
++        "elapsed_seconds": time.time() - start_time,
++        "stop_requested": stop_requested,
++        "best_val_success_rate": best_val,
++    }
++    save_checkpoint(checkpoint_dir / "final", train_state, final_metadata)
++    (run_dir / "finished.json").write_text(json.dumps(final_metadata, indent=2, sort_keys=True))
++    writer.close()
++    print(json.dumps({"event": "finished", **final_metadata}, sort_keys=True), flush=True)
++
++
++def parse_args() -> Config:
++    parser = argparse.ArgumentParser()
++    parser.add_argument("--env-id", required=True, choices=SUPPORTED_ENVS)
++    parser.add_argument("--run-dir", required=True)
++    parser.add_argument("--hours", type=float, default=4.0)
++    parser.add_argument("--total-timesteps", type=int, default=200_000_000)
++    parser.add_argument("--num-envs", type=int, default=512)
++    parser.add_argument("--rollout-steps", type=int, default=64)
++    parser.add_argument("--updates-per-block", type=int, default=8)
++    parser.add_argument("--update-epochs", type=int, default=2)
++    parser.add_argument("--num-minibatches", type=int, default=8)
++    parser.add_argument("--learning-rate", type=float, default=3e-4)
++    parser.add_argument("--eval-every-blocks", type=int, default=4)
++    parser.add_argument("--eval-episodes", type=int, default=192)
++    parser.add_argument("--seed", type=int, default=42)
++    parser.add_argument("--resume")
++    args = parser.parse_args()
++    return Config(**vars(args))
++
++
++if __name__ == "__main__":
++    train(parse_args())

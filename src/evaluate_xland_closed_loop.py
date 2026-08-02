@@ -14,7 +14,10 @@ import time
 
 import jax
 import numpy as np
-from tensorboardX import SummaryWriter
+try:
+    from tensorboardX import SummaryWriter
+except ModuleNotFoundError:
+    from torch.utils.tensorboard import SummaryWriter
 
 
 ENV_ID = "XLand-MiniGrid-ExactCraft-Easy-8x8-v1"
@@ -27,6 +30,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--tb-dir", type=Path, required=True)
     parser.add_argument("--global-step", type=int, required=True)
+    parser.add_argument("--split", choices=("train", "val_ood"), default="train")
+    parser.add_argument("--strategy", choices=("greedy", "sample"), default="greedy")
+    parser.add_argument("--temperature", type=float, default=1.0)
     parser.add_argument("--episodes", type=int, default=30)
     parser.add_argument("--seed-start", type=int, default=3000000)
     parser.add_argument("--image-size", type=int, default=128)
@@ -78,20 +84,27 @@ def resize_half_area(rgb: np.ndarray, target_size: int) -> np.ndarray:
 
 def main() -> None:
     args = parse_args()
+    if args.strategy == "sample" and args.temperature <= 0:
+        raise ValueError("--temperature must be positive for sampling")
     args.output_dir.mkdir(parents=True, exist_ok=True)
     args.tb_dir.mkdir(parents=True, exist_ok=True)
     repo = args.xland_repo.expanduser().resolve()
     sys.path.insert(0, str(repo))
     sys.path.insert(0, str(repo / "training"))
+    # PPO imports tensorboardX for its own trainer; this evaluator writes with SummaryWriter above.
+    if "tensorboardX" not in sys.modules:
+        import types
+        sys.modules["tensorboardX"] = types.SimpleNamespace(SummaryWriter=SummaryWriter)
     from train_privileged_crafting_ppo import make_env, task_banks
 
     env, base_params = make_env(ENV_ID, autoreset=False)
-    train_bank, _ = task_banks(ENV_ID)
-    num_tasks = int(train_bank.num_rulesets())
+    train_bank, val_bank = task_banks(ENV_ID)
+    task_bank = train_bank if args.split == "train" else val_bank
+    num_tasks = int(task_bank.num_rulesets())
     reset_env = jax.jit(env.reset)
     step_env = jax.jit(env.step)
 
-    warm_params = base_params.replace(ruleset=train_bank.get_ruleset(0))
+    warm_params = base_params.replace(ruleset=task_bank.get_ruleset(0))
     warm = reset_env(warm_params, jax.random.key(args.seed_start))
     warm = step_env(warm_params, warm, 0)
     jax.block_until_ready(warm.reward)
@@ -105,7 +118,7 @@ def main() -> None:
             task_index = episode_index % num_tasks
             seed = args.seed_start + episode_index
             params = base_params.replace(
-                ruleset=train_bank.get_ruleset(task_index)
+                ruleset=task_bank.get_ruleset(task_index)
             )
             host_params = jax.device_get(params)
             timestep = reset_env(params, jax.random.key(seed))
@@ -156,7 +169,9 @@ def main() -> None:
     }
     summary = {
         "env_id": ENV_ID,
-        "split": "train_tasks",
+        "split": args.split,
+        "strategy": args.strategy,
+        "temperature": args.temperature,
         "global_step": args.global_step,
         "episodes": args.episodes,
         "success_rate": success_rate,
@@ -169,24 +184,24 @@ def main() -> None:
     }
     output_path = (
         args.output_dir
-        / f"closed_loop_step_{args.global_step:07d}.json"
+        / f"{args.split}_temperature_{int(args.temperature)}_step_{args.global_step:07d}.json"
     )
     output_path.write_text(json.dumps(summary, indent=2, sort_keys=True))
 
     writer = SummaryWriter(str(args.tb_dir))
     writer.add_scalar(
-        "closed_loop/success_rate",
+        f"closed_loop/{args.split}/temperature_{int(args.temperature)}/success_rate",
         success_rate,
         args.global_step,
     )
     writer.add_scalar(
-        "closed_loop/mean_episode_length",
+        f"closed_loop/{args.split}/temperature_{int(args.temperature)}/mean_episode_length",
         mean_length,
         args.global_step,
     )
     for task, value in per_task.items():
         writer.add_scalar(
-            f"closed_loop/task_{task}_success_rate",
+            f"closed_loop/{args.split}/temperature_{int(args.temperature)}/task_{task}_success_rate",
             value,
             args.global_step,
         )

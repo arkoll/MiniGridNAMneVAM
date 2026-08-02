@@ -1,0 +1,181 @@
+diff --git a/src/configs/experiment/xland_joint.yaml b/src/configs/experiment/xland_joint.yaml
+index 1a68ac5..8fb2101 100644
+--- a/src/configs/experiment/xland_joint.yaml
++++ b/src/configs/experiment/xland_joint.yaml
+@@ -38,6 +38,7 @@ joint_action:
+   num_heads: 4
+   dropout: 0.1
+   loss_weight: 1.0
++  video_loss_weight: 1.0
+   visualize_every_n_steps: 5000
+   visualize_samples: 4
+   visualize_sampling_steps: 25
+diff --git a/src/experiments/train_experiment.py b/src/experiments/train_experiment.py
+index 7d2653e..af2c09f 100644
+--- a/src/experiments/train_experiment.py
++++ b/src/experiments/train_experiment.py
+@@ -92,11 +92,17 @@ class NanoWMTrainingModule(LightningModule):
+                 dropout=float(joint_cfg.get("dropout", 0.1)),
+             )
+             self.action_loss_weight = float(joint_cfg.get("loss_weight", 1.0))
++            self.video_loss_weight = float(joint_cfg.get("video_loss_weight", 1.0))
++            if self.video_loss_weight < 0:
++                raise ValueError("joint_action.video_loss_weight must be non-negative")
+             self.logger_instance.info(
+                 "Joint discrete action head enabled: "
+                 f"{sum(p.numel() for p in self.action_head.parameters()):,} parameters"
+             )
+ 
++        if not self.joint_action_enabled and self.video_loss_weight == 0:
++            raise ValueError("video_loss_weight=0 requires experiment.joint_action.enabled=true")
++
+         # torch.compile must wrap *after* any pretrained weight load so that the
+         # underlying nn.Module's state_dict layout doesn't shift mid-load. The
+         # checkpoint resume path (_load_checkpoint) re-normalizes `_orig_mod.`
+@@ -323,28 +329,32 @@ class NanoWMTrainingModule(LightningModule):
+         else:
+             raise ValueError(f"Unknown diffusion_mode: {diffusion_mode}. Must be 'full_seq_diffusion' or 'diffusion_forcing'")
+ 
+-        t = sample_training_timesteps(
+-            t_shape,
+-            self.diffusion.num_timesteps,
+-            strategy=self.args.experiment.diffusion.timestep_sampling,
+-            logit_normal_mean=self.args.experiment.diffusion.logit_normal_mean,
+-            logit_normal_std=self.args.experiment.diffusion.logit_normal_std,
+-            device=self.device,
+-        )
++        video_loss = None
++        if self.video_loss_weight > 0:
++            t = sample_training_timesteps(
++                t_shape,
++                self.diffusion.num_timesteps,
++                strategy=self.args.experiment.diffusion.timestep_sampling,
++                logit_normal_mean=self.args.experiment.diffusion.logit_normal_mean,
++                logit_normal_std=self.args.experiment.diffusion.logit_normal_std,
++                device=self.device,
++            )
++            loss_dict = self.diffusion.training_losses(self.model, x, t, model_kwargs)
++            video_loss = loss_dict["loss"].mean()
+ 
+-        loss_dict = self.diffusion.training_losses(self.model, x, t, model_kwargs)
+-        video_loss = loss_dict["loss"].mean()
+         n_context = int(self.args.model.n_context_frames)
+         action_metrics = self._compute_action_metrics(batch, x[:, :n_context])
+         if action_metrics is None:
+-            loss = video_loss
++            loss = self.video_loss_weight * video_loss
+         else:
+             action_loss, action_accuracy, sequence_accuracy = action_metrics
+-            loss = video_loss + self.action_loss_weight * action_loss
++            loss = self.action_loss_weight * action_loss
++            if video_loss is not None:
++                loss = loss + self.video_loss_weight * video_loss
++                self.log("train/video_loss", video_loss, logger=True, sync_dist=True, batch_size=x.shape[0])
+             self.log("train/action_loss", action_loss, logger=True, sync_dist=True, batch_size=x.shape[0])
+             self.log("train/action_accuracy", action_accuracy, prog_bar=True, logger=True, sync_dist=True, batch_size=x.shape[0])
+             self.log("train/action_sequence_accuracy", sequence_accuracy, logger=True, sync_dist=True, batch_size=x.shape[0])
+-            self.log("train/video_loss", video_loss, logger=True, sync_dist=True, batch_size=x.shape[0])
+ 
+         if self.global_step < self.args.experiment.training.gradient_clip_start_step:
+             gradient_norm = clip_grad_norm_(self.opt.param_groups[0]["params"], self.args.experiment.training.gradient_clip_norm, clip_grad=False)
+@@ -386,28 +396,32 @@ class NanoWMTrainingModule(LightningModule):
+ 
+             diffusion_mode = self.args.experiment.diffusion.mode
+             t_shape = (x.shape[0], x.shape[1]) if diffusion_mode == "diffusion_forcing" else (x.shape[0],)
+-            t = sample_training_timesteps(
+-                t_shape,
+-                self.diffusion.num_timesteps,
+-                strategy=self.args.experiment.diffusion.timestep_sampling,
+-                logit_normal_mean=self.args.experiment.diffusion.logit_normal_mean,
+-                logit_normal_std=self.args.experiment.diffusion.logit_normal_std,
+-                device=self.device,
+-            )
++            video_loss = None
++            if self.video_loss_weight > 0:
++                t = sample_training_timesteps(
++                    t_shape,
++                    self.diffusion.num_timesteps,
++                    strategy=self.args.experiment.diffusion.timestep_sampling,
++                    logit_normal_mean=self.args.experiment.diffusion.logit_normal_mean,
++                    logit_normal_std=self.args.experiment.diffusion.logit_normal_std,
++                    device=self.device,
++                )
++                loss_dict = self.diffusion.training_losses(self.model, x, t, model_kwargs)
++                video_loss = loss_dict["loss"].mean()
+ 
+-            loss_dict = self.diffusion.training_losses(self.model, x, t, model_kwargs)
+-            video_loss = loss_dict["loss"].mean()
+             n_context = int(self.args.model.n_context_frames)
+             action_metrics = self._compute_action_metrics(batch, x[:, :n_context])
+             if action_metrics is None:
+-                loss = video_loss
++                loss = self.video_loss_weight * video_loss
+             else:
+                 action_loss, action_accuracy, sequence_accuracy = action_metrics
+-                loss = video_loss + self.action_loss_weight * action_loss
++                loss = self.action_loss_weight * action_loss
++                if video_loss is not None:
++                    loss = loss + self.video_loss_weight * video_loss
++                    self.log("val/video_loss", video_loss, on_step=False, on_epoch=True, logger=True, sync_dist=True, batch_size=x.shape[0])
+                 self.log("val/action_loss", action_loss, on_step=False, on_epoch=True, logger=True, sync_dist=True, batch_size=x.shape[0])
+                 self.log("val/action_accuracy", action_accuracy, on_step=False, on_epoch=True, prog_bar=True, logger=True, sync_dist=True, batch_size=x.shape[0])
+                 self.log("val/action_sequence_accuracy", sequence_accuracy, on_step=False, on_epoch=True, logger=True, sync_dist=True, batch_size=x.shape[0])
+-                self.log("val/video_loss", video_loss, on_step=False, on_epoch=True, logger=True, sync_dist=True, batch_size=x.shape[0])
+ 
+             self.log("val_loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True, sync_dist=True, batch_size=x.shape[0])
+ 
+diff --git a/src/wm_datasets/data_source/xland.py b/src/wm_datasets/data_source/xland.py
+index 7dfd894..92c8f09 100644
+--- a/src/wm_datasets/data_source/xland.py
++++ b/src/wm_datasets/data_source/xland.py
+@@ -74,7 +74,7 @@ class XLandDataSource(DataSource):
+             states=states,
+             actions=actions,
+             seq_length=actions.shape[0],
+-            meta=episode["metadata"],
++            meta={},  # Audit metadata must not be collated into a training batch.
+         )
+ 
+     def get_seq_length(self, index: int) -> int:
+diff --git a/home/user8_3/xland/xland_joint_wam/repos/nano-world-model/src/configs/model/nanowm_xland_b4.yaml b/home/user8_3/xland/xland_joint_wam/repos/nano-world-model/src/configs/model/nanowm_xland_b4.yaml
+new file mode 100644
+index 0000000..d5ad75c
+--- /dev/null
++++ b/home/user8_3/xland/xland_joint_wam/repos/nano-world-model/src/configs/model/nanowm_xland_b4.yaml
+@@ -0,0 +1,15 @@
++arch: NanoWM-B/4
++name: NanoWM-XLand-B-4-Joint
++num_frames: 4
++n_context_frames: 1
++scheduling_mode: "sequential"
++num_sampling_steps: 25
++use_action: false
++action_injection:
++  type: additive
++causal: true
++image_size: 128
++latent_size: 16
++latent_channels: 4
++extras: 1
++num_classes: 1000
+diff --git a/home/user8_3/xland/xland_joint_wam/repos/nano-world-model/src/configs/model/nanowm_xland_l4.yaml b/home/user8_3/xland/xland_joint_wam/repos/nano-world-model/src/configs/model/nanowm_xland_l4.yaml
+new file mode 100644
+index 0000000..42b7af4
+--- /dev/null
++++ b/home/user8_3/xland/xland_joint_wam/repos/nano-world-model/src/configs/model/nanowm_xland_l4.yaml
+@@ -0,0 +1,15 @@
++arch: NanoWM-L/4
++name: NanoWM-XLand-L-4-Joint
++num_frames: 4
++n_context_frames: 1
++scheduling_mode: "sequential"
++num_sampling_steps: 25
++use_action: false
++action_injection:
++  type: additive
++causal: true
++image_size: 128
++latent_size: 16
++latent_channels: 4
++extras: 1
++num_classes: 1000

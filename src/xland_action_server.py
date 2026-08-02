@@ -22,6 +22,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--checkpoint", type=Path, required=True)
     parser.add_argument("--socket", type=Path, required=True)
     parser.add_argument("--device", default="cuda")
+    parser.add_argument("--strategy", choices=("greedy", "sample"), default="greedy")
+    parser.add_argument("--temperature", type=float, default=1.0)
+    parser.add_argument("--sampling-seed", type=int, default=3407)
     return parser.parse_args()
 
 
@@ -39,6 +42,8 @@ def receive_exact(connection: socket.socket, size: int) -> bytes:
 
 def main() -> None:
     args = parse_args()
+    if args.strategy == "sample" and args.temperature <= 0:
+        raise ValueError("--temperature must be positive for sampling")
     repo = args.nanowm_repo.expanduser().resolve()
     sys.path.insert(0, str(repo / "src"))
     from experiments.train_experiment import NanoWMTrainingModule
@@ -70,6 +75,7 @@ def main() -> None:
     device = torch.device(args.device)
     module.to(device)
     module.eval()
+    generator = torch.Generator(device=device).manual_seed(args.sampling_seed)
     image_size = int(config.model.image_size)
     expected_bytes = image_size * image_size * 3
 
@@ -114,7 +120,12 @@ def main() -> None:
                 )
                 with torch.inference_mode():
                     logits = module.predict_action_logits(video)
-                    action = int(logits[0, 0].argmax().item())
+                    first_logits = logits[0, 0]
+                    if args.strategy == "greedy":
+                        action = int(first_logits.argmax().item())
+                    else:
+                        probabilities = torch.softmax(first_logits / args.temperature, dim=-1)
+                        action = int(torch.multinomial(probabilities, 1, generator=generator).item())
                 connection.sendall(struct.pack("!B", action))
     finally:
         server.close()
