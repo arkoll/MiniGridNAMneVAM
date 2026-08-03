@@ -46,7 +46,7 @@ time.*
 |---|---|
 | ![OOD SR by model size](assets/ood_sr_model_size_t1.png) | ![OOD SR by data size](assets/ood_sr_dataset_size_t1.png) |
 
-*Left: OOD SR across Small, Base and Large models; bars compare Video + action with Action-only. Right: preliminary OOD data-scaling result for the Base model. The 1k, 3k, 10k and 100k data points use 30 evaluation episodes; the re-used 30k point uses 200 episodes and a different training budget, so the right plot is descriptive rather than a strict scaling-law fit.*
+*Left: OOD SR across Small, Base and Large models; bars compare Video + action with Action-only. Right: preliminary OOD data-scaling result for the Base model. The 1k, 3k, 10k and 100k data points use 30 evaluation episodes.*
 
 ## Environment and protocol
 
