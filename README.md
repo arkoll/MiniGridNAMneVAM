@@ -40,6 +40,14 @@ time.*
 5. **Training objective:** when does the joint video+action objective help
    relative to action-only training?
 
+## Selected OOD success-rate results
+
+| Model-size scaling (T=1, 200 episodes per condition) | Data-size scaling (T=1) |
+|---|---|
+| ![OOD SR by model size](assets/ood_sr_model_size_t1.png) | ![OOD SR by data size](assets/ood_sr_dataset_size_t1.png) |
+
+*Left: OOD SR across Small, Base and Large models; bars compare Video + action with Action-only. Right: preliminary OOD data-scaling result for the Base model. The 1k, 3k, 10k and 100k data points use 30 evaluation episodes; the re-used 30k point uses 200 episodes and a different training budget, so the right plot is descriptive rather than a strict scaling-law fit.*
+
 ## Environment and protocol
 
 ExactCraft-Easy renders an 8×8 world at 128×128 RGB. The agent has six
